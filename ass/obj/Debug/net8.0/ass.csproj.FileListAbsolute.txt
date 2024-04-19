@@ -1,0 +1,15 @@
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.GeneratedMSBuildEditorConfig.editorconfig
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.AssemblyInfoInputs.cache
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.AssemblyInfo.cs
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.csproj.CoreCompileInputs.cache
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.sourcelink.json
+/home/looooong/RV32S/ass/bin/Debug/net8.0/ass
+/home/looooong/RV32S/ass/bin/Debug/net8.0/ass.deps.json
+/home/looooong/RV32S/ass/bin/Debug/net8.0/ass.runtimeconfig.json
+/home/looooong/RV32S/ass/bin/Debug/net8.0/ass.dll
+/home/looooong/RV32S/ass/bin/Debug/net8.0/ass.pdb
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.dll
+/home/looooong/RV32S/ass/obj/Debug/net8.0/refint/ass.dll
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.pdb
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ass.genruntimeconfig.cache
+/home/looooong/RV32S/ass/obj/Debug/net8.0/ref/ass.dll

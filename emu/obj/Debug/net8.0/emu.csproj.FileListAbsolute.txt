@@ -1,0 +1,15 @@
+/home/looooong/RV32S/emu/bin/Debug/net8.0/emu
+/home/looooong/RV32S/emu/bin/Debug/net8.0/emu.deps.json
+/home/looooong/RV32S/emu/bin/Debug/net8.0/emu.runtimeconfig.json
+/home/looooong/RV32S/emu/bin/Debug/net8.0/emu.dll
+/home/looooong/RV32S/emu/bin/Debug/net8.0/emu.pdb
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.GeneratedMSBuildEditorConfig.editorconfig
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.AssemblyInfoInputs.cache
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.AssemblyInfo.cs
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.csproj.CoreCompileInputs.cache
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.sourcelink.json
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.dll
+/home/looooong/RV32S/emu/obj/Debug/net8.0/refint/emu.dll
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.pdb
+/home/looooong/RV32S/emu/obj/Debug/net8.0/emu.genruntimeconfig.cache
+/home/looooong/RV32S/emu/obj/Debug/net8.0/ref/emu.dll
