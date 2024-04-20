@@ -1,6 +1,6 @@
 namespace RV32Semu;
 
-class GPR
+class Gpr
 {
     const int MS_SIZE = 4095;
     public enum REG_ENUM_X
@@ -24,7 +24,7 @@ class GPR
     public readonly uint[] X = new uint[32];
     public readonly float[] F = new float[32];
     public readonly float[,] MS = new float[MS_SIZE, 128];
-    public uint Fcsr{ get; set; }
+    public uint Fcsr { get; set; }
 
 
     public void Print()

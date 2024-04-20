@@ -1,10 +1,8 @@
-﻿using RV32Semu;
+﻿var src = "/home/looooong/RV32S/tests";
 
-var src = "/home/looooong/RV32S/tests";
-
-Tracer tracer = new();
-CPU cpu = new CPU(tracer);
-
+RV32Semu.Tracer tracer = new();
+RV32Semu.Cpu cpu = new RV32Semu.CpuWithTracer(new RV32Semu.Decoder(), new RV32Semu.Gpr(),
+                    new RV32Semu.MemoryWithTracer(tracer), tracer);
 
 cpu.Init($"{src}/{args[0]}.bin");
 tracer.Init($"{src}/{args[0]}.txt");
@@ -46,7 +44,7 @@ try
         }
     }
 }
-catch (Ebreak)
+catch (RV32Semu.Ebreak)
 {
     Console.ForegroundColor = ConsoleColor.Green;
     Console.WriteLine("SUCCESS!");

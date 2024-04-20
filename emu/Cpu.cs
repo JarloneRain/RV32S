@@ -9,22 +9,19 @@ namespace RV32Semu;
 class Ebreak : Exception { }
 
 
-class CPU
+class Cpu
 {
     const uint PC_DEFAULT = 0x80000000;
     internal Decoder decoder;
-    internal GPR gpr;
+    internal Gpr gpr;
     internal Memory memory;
     internal InstExcuter excuter;
-    Tracer tracer;
-    uint pc;
-    uint inst;
-    public CPU(Tracer tracer)
+    protected uint pc;
+    public Cpu(Decoder decoder,Gpr gpr,Memory memory)
     {
-        this.tracer = tracer;
-        decoder = new Decoder();
-        gpr = new GPR();
-        memory = new Memory(tracer);
+        this.decoder = decoder;
+        this.gpr =gpr;
+        this.memory = memory;
         excuter = new InstExcuter(this);
     }
     public void Init(string path)
@@ -34,28 +31,25 @@ class CPU
         memory.Init(path);
     }
 
+    protected virtual void ExecOnce()
+    {
+        uint inst = memory[pc, 4];
+
+        decoder.Inst = inst;
+        decoder.PC = pc;
+        decoder.Dnpc = pc + 4;
+
+        excuter.Execute(inst);
+
+        gpr.X[0] = 0;
+        pc = decoder.Dnpc;
+    }
+
     public void Exec(int t)
     {
         for (int i = 0; i < t; i++)
         {
-            tracer.T++;
-
-            tracer.InstTrace(pc);
-
-            inst = memory[pc, 4];
-
-            PrintPcInst();
-
-            decoder.Inst = inst;
-            decoder.PC = pc;
-            decoder.Dnpc = pc + 4;
-
-            excuter.Execute(inst);
-
-            tracer.FuncTrace(decoder.Snpc, decoder.Snpc);
-
-            gpr.X[0] = 0;
-            pc = decoder.Dnpc;
+            ExecOnce();
         }
 
     }
@@ -64,23 +58,16 @@ class CPU
     {
         Console.ForegroundColor = ConsoleColor.DarkMagenta;
         Console.WriteLine($"pc   :{pc:X8} {pc}");
-        foreach (var reg in Enum.GetValues<GPR.REG_ENUM_X>())
+        foreach (var reg in Enum.GetValues<Gpr.REG_ENUM_X>())
         {
             Console.WriteLine($"{reg,-5}:{gpr.X[(int)reg]:X8} {gpr.X[(int)reg]}");
         }
-        foreach (var reg in Enum.GetValues<GPR.REG_ENUM_F>())
+        foreach (var reg in Enum.GetValues<Gpr.REG_ENUM_F>())
         {
             Console.WriteLine($"{reg,-5}:{gpr.F[(int)reg]}");
         }
         Console.ResetColor();
     }
-    public void PrintPcInst()
-    {
-        Console.ForegroundColor = ConsoleColor.Magenta;
-        Console.WriteLine($"{pc:X8}:{inst:X8}");
-        Console.ResetColor();
-    }
-
 }
 
 class Decoder
@@ -106,10 +93,10 @@ class Decoder
 class InstExcuter
 {
     internal (string InstPattern, Action Act)[] execTable;
-    public InstExcuter(CPU cpu)
+    public InstExcuter(Cpu cpu)
     {
 
-        GPR r = cpu.gpr;
+        Gpr r = cpu.gpr;
         Memory m = cpu.memory;
         Decoder d = cpu.decoder;
         execTable =

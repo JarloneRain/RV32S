@@ -5,10 +5,8 @@ class Memory
     const uint MEMORY_SIZE = 1 * 1024 * 1024;//1MB
     const uint MEMORY_BASE = 0x80000000;
     byte[] memory = new byte[MEMORY_SIZE];
-    Tracer tracer;
-    public Memory(Tracer tracer)
+    public Memory()
     {
-        this.tracer = tracer;
         //auipc
         memory[3] = 0x00; memory[2] = 0x00; memory[1] = 0x05; memory[0] = 0x37;
         //ebreak
@@ -21,7 +19,7 @@ class Memory
         Buffer.BlockCopy(bytes, 0, memory, 0, bytes.Length);
     }
 
-    public uint this[uint addr, int bytes]
+    public virtual uint this[uint addr, int bytes]
     {
         get
         {
@@ -33,7 +31,6 @@ class Memory
                 {
                     res += (uint)memory[addr + i] << (8 * i);
                 }
-                tracer.MemReadTrace(addr + MEMORY_BASE, bytes, res);
                 return res;
             }
             throw new Exception($"Address 0x{addr:X8} is out of memory!");
@@ -48,7 +45,6 @@ class Memory
                     memory[addr + i] = (byte)(value & 0xFF);
                     value >>= 8;
                 }
-                tracer.MemWriteTrace(addr + MEMORY_BASE, bytes, value);
                 return;
             }
             throw new Exception($"Address 0x{addr:X8} is out of memory!");
