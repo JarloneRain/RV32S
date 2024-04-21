@@ -2,7 +2,6 @@ namespace RV32Semu;
 
 class Gpr
 {
-    const int MS_SIZE = 4095;
     public enum REG_ENUM_X
     {
         zero,
@@ -23,7 +22,10 @@ class Gpr
     }
     public readonly uint[] X = new uint[32];
     public readonly float[] F = new float[32];
-    public readonly float[,] MS = new float[MS_SIZE, 128];
+    public readonly Matrix4x4[] M = [new(), new(),
+        new(), new(), new(), new(), new(), new(), new(), new(), new(), new(),
+        new(), new(), new(), new(), new(), new(), new(), new(), new(), new(),
+        new(), new(), new(), new(), new(), new(), new(), new(), new(), new()];
     public uint Fcsr { get; set; }
 
 

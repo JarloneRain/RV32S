@@ -1,20 +1,20 @@
-using System.Security.Cryptography;
+
 
 namespace RV32Semu;
 
-struct Matrix4x4
+class Matrix4x4
 {
     float m00, m01, m02, m03;
     float m10, m11, m12, m13;
     float m20, m21, m22, m23;
     float m30, m31, m32, m33;
 
-    public Matrix4x4 SwapCol(int i, int j)
+    public Matrix4x4 SwapCol(uint i, uint j)
     {
         Matrix4x4 that = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 that[row, col] = this[row, col];
             }
@@ -23,12 +23,12 @@ struct Matrix4x4
         }
         return that;
     }
-    public Matrix4x4 SwapRow(int i, int j)
+    public Matrix4x4 SwapRow(uint i, uint j)
     {
         Matrix4x4 that = new();
-        for (int col = 0; col < 4; col++)
+        for (uint col = 0; col < 4; col++)
         {
-            for (int row = 0; row < 4; row++)
+            for (uint row = 0; row < 4; row++)
             {
                 that[row, col] = this[row, col];
             }
@@ -37,24 +37,24 @@ struct Matrix4x4
         }
         return that;
     }
-    public Matrix4x4 MultiplyCol(float x, int i)
+    public Matrix4x4 MultiplyCol(float x, uint i)
     {
         Matrix4x4 that = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 that[row, col] = col == i ? (x * this[row, col]) : this[row, col];
             }
         }
         return that;
     }
-    public Matrix4x4 MultiplyRow(float x, int i)
+    public Matrix4x4 MultiplyRow(float x, uint i)
     {
         Matrix4x4 that = new();
-        for (int col = 0; col < 4; col++)
+        for (uint col = 0; col < 4; col++)
         {
-            for (int row = 0; row < 4; row++)
+            for (uint row = 0; row < 4; row++)
             {
                 that[row, col] = row == i ? (x * this[row, col]) : this[row, col];
             }
@@ -62,49 +62,52 @@ struct Matrix4x4
         return that;
     }
 
-    public Matrix4x4 AdditionCol(float x, int i, int j)
+    public Matrix4x4 AdditionCol(float x, uint i, uint j)
     {
         Matrix4x4 that = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 that[row, col] = col == j ? (x * this[row, i] + this[row, j]) : this[row, col];
             }
         }
         return that;
     }
-    public Matrix4x4 AdditionRow(float x, int i, int j)
+    public Matrix4x4 AdditionRow(float x, uint i, uint j)
     {
         Matrix4x4 that = new();
-        for (int col = 0; col < 4; col++)
+        for (uint col = 0; col < 4; col++)
         {
-            for (int row = 0; row < 4; row++)
+            for (uint row = 0; row < 4; row++)
             {
                 that[row, col] = row == j ? (x * this[i, col] + this[row, col]) : this[row, col];
             }
         }
         return that;
     }
-    public Matrix4x4 Transpose()
+    public Matrix4x4 Transpose
     {
-        Matrix4x4 that = new();
-        for (int row = 0; row < 4; row++)
+        get
         {
-            for (int col = 0; col < 4; col++)
+            Matrix4x4 that = new();
+            for (uint row = 0; row < 4; row++)
             {
-                that[row, col] = this[col, row];
+                for (uint col = 0; col < 4; col++)
+                {
+                    that[row, col] = this[col, row];
+                }
             }
+            return that;
         }
-        return that;
     }
 
     public static Matrix4x4 operator +(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 c = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 c[row, col] = a[row, col] + b[row, col];
             }
@@ -114,9 +117,9 @@ struct Matrix4x4
     public static Matrix4x4 operator -(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 c = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 c[row, col] = a[row, col] - b[row, col];
             }
@@ -126,9 +129,9 @@ struct Matrix4x4
     public static Matrix4x4 operator *(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 c = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 c[row, col] = a[row, col] * b[row, col];
             }
@@ -138,63 +141,69 @@ struct Matrix4x4
     public static Matrix4x4 operator /(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 c = new();
-        for (int row = 0; row < 4; row++)
+        for (uint row = 0; row < 4; row++)
         {
-            for (int col = 0; col < 4; col++)
+            for (uint col = 0; col < 4; col++)
             {
                 c[row, col] = a[row, col] / b[row, col];
             }
         }
         return c;
     }
-
-    public Matrix4x4 Times(Matrix4x4 that)
+    public static Matrix4x4 operator %(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 result = new();
-        for (int i = 0; i < 4; i++)
+        for (uint i = 0; i < 4; i++)
         {
-            for (int j = 0; j < 4; j++)
+            for (uint j = 0; j < 4; j++)
             {
-                for (int k = 0; k < 4; k++)
+                for (uint k = 0; k < 4; k++)
                 {
-                    result[i, j] += this[i, k] * that[k, j];
+                    result[i, j] += a[i, k] * b[k, j];
                 }
             }
         }
         return result;
     }
-
-    public readonly float Trace => m00 + m11 + m22 + m33;
-    public readonly float Determinant => m00 * m11 * m22 * m33
-                                        - m00 * m11 * m23 * m32
-                                        - m00 * m12 * m21 * m33
-                                        + m00 * m12 * m23 * m31
-                                        + m00 * m13 * m21 * m32
-                                        - m00 * m13 * m22 * m31
-                                        - m01 * m10 * m22 * m33
-                                        + m01 * m10 * m23 * m32
-                                        + m01 * m12 * m20 * m33
-                                        - m01 * m12 * m23 * m30
-                                        - m01 * m13 * m20 * m32
-                                        + m01 * m13 * m22 * m30
-                                        + m02 * m10 * m21 * m33
-                                        - m02 * m10 * m23 * m31
-                                        - m02 * m11 * m20 * m33
-                                        + m02 * m11 * m23 * m30
-                                        + m02 * m13 * m20 * m31
-                                        - m02 * m13 * m21 * m30
-                                        - m03 * m10 * m21 * m32
-                                        + m03 * m10 * m22 * m31
-                                        + m03 * m11 * m20 * m32
-                                        - m03 * m11 * m22 * m30
-                                        - m03 * m12 * m20 * m31
-                                        + m03 * m12 * m21 * m30;
-    public float this[uint i, uint j]
+    public static Matrix4x4 Gen(Func<uint, uint, float> genFunc)
     {
-        get => this[(int)i, (int)j];
-        set => this[(int)i, (int)j] = value;
+        Matrix4x4 m = new();
+        for (uint i = 0; i < 4; i++)
+        {
+            for (uint j = 0; j < 4; j++)
+            {
+                m[i, j] = genFunc(i, j);
+            }
+        }
+        return m;
     }
-    public float this[int i, int j]
+
+    public float Trace => m00 + m11 + m22 + m33;
+    public float Determinant => m00 * m11 * m22 * m33
+                                - m00 * m11 * m23 * m32
+                                - m00 * m12 * m21 * m33
+                                + m00 * m12 * m23 * m31
+                                + m00 * m13 * m21 * m32
+                                - m00 * m13 * m22 * m31
+                                - m01 * m10 * m22 * m33
+                                + m01 * m10 * m23 * m32
+                                + m01 * m12 * m20 * m33
+                                - m01 * m12 * m23 * m30
+                                - m01 * m13 * m20 * m32
+                                + m01 * m13 * m22 * m30
+                                + m02 * m10 * m21 * m33
+                                - m02 * m10 * m23 * m31
+                                - m02 * m11 * m20 * m33
+                                + m02 * m11 * m23 * m30
+                                + m02 * m13 * m20 * m31
+                                - m02 * m13 * m21 * m30
+                                - m03 * m10 * m21 * m32
+                                + m03 * m10 * m22 * m31
+                                + m03 * m11 * m20 * m32
+                                - m03 * m11 * m22 * m30
+                                - m03 * m12 * m20 * m31
+                                + m03 * m12 * m21 * m30;
+    public float this[uint i, uint j]
     {
         get => (i, j) switch
         {

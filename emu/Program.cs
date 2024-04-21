@@ -17,6 +17,7 @@ try
     x N  : execute N instructions
     t N  : show N trace
     r    : print regs
+    m    : print memory
     q    : quit
 ");
         string cmd = Console.ReadLine() ?? "";
@@ -38,7 +39,7 @@ try
                 return;
             default:
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("Unknow coomand.");
+                Console.WriteLine("Unknow command.");
                 Console.ResetColor();
                 break;
         }
