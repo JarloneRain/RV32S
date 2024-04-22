@@ -3,6 +3,7 @@
 bin/
 obj/
 text.txt
+opcode.txt
 RV32S.sln
 cst/
 !.gitignore

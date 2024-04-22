@@ -290,9 +290,17 @@ class InstExcuter
             //smtt
             ("0000000..........001.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1].Transpose),
             //smgen
-            ("0000000..........000.....1011011",()=>r.M[d.Rd]=Matrix4x4.Gen((i,j)=>r.F[d.Rd])),
+            ("0000000..........000.....1011011",()=>r.M[d.Rd]=new((i,j)=>r.F[d.Rd])),
             //smgend
-            ("0000001..........000.....1011011",()=>r.M[d.Rd]=Matrix4x4.Gen((i,j)=>i==j?r.F[d.Rd]:0.0f)),
+            ("0000001..........000.....1011011",()=>r.M[d.Rd]=new((i,j)=>i==j?r.F[d.Rd]:0)),
+            //sml
+            (".................000.....1111011",()=>r.M[d.Rd]=new((i,j)=>m[(uint)(r.X[d.Rs1]+d.ImmI+4*((4*i)+j)),4].Bin2<float>())),
+            //smld
+            (".................001.....1111011",()=>r.M[d.Rd]=new((i,j)=>i==j?m[(uint)(r.X[d.Rs1]+d.ImmI+2*(i+j)),4].Bin2<float>():0)),
+            //sms
+            (".................000.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>m[(uint)(r.X[d.Rs1]+d.ImmS+4*((4*i)+j)),4]=mij.Float2Bin())),
+            //sms
+            (".................001.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>{if(i==j) m[(uint)(r.X[d.Rs1] + d.ImmS + 2*(i+j)), 4] = mij.Float2Bin(); })),
             //smtr
             ("0000010..........001.....1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Trace),
             //smdet

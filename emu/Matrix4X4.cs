@@ -1,5 +1,3 @@
-
-
 namespace RV32Semu;
 
 class Matrix4x4
@@ -9,6 +7,21 @@ class Matrix4x4
     float m20, m21, m22, m23;
     float m30, m31, m32, m33;
 
+    public Matrix4x4()
+    {
+        m00 = m01 = m02 = m03 = 0;
+        m10 = m11 = m12 = m13 = 0;
+        m20 = m21 = m22 = m23 = 0;
+        m30 = m31 = m32 = m33 = 0;
+    }
+
+    public Matrix4x4(Func<uint, uint, float> generator)
+    {
+        m00 = generator(0, 0); m01 = generator(0, 1); m02 = generator(0, 2); m03 = generator(0, 3);
+        m10 = generator(1, 0); m11 = generator(1, 1); m12 = generator(1, 2); m13 = generator(1, 3);
+        m20 = generator(2, 0); m21 = generator(2, 1); m22 = generator(2, 2); m23 = generator(2, 3);
+        m30 = generator(3, 0); m31 = generator(3, 1); m32 = generator(3, 2); m33 = generator(3, 3);
+    }
     public Matrix4x4 SwapCol(uint i, uint j)
     {
         Matrix4x4 that = new();
@@ -165,18 +178,6 @@ class Matrix4x4
         }
         return result;
     }
-    public static Matrix4x4 Gen(Func<uint, uint, float> genFunc)
-    {
-        Matrix4x4 m = new();
-        for (uint i = 0; i < 4; i++)
-        {
-            for (uint j = 0; j < 4; j++)
-            {
-                m[i, j] = genFunc(i, j);
-            }
-        }
-        return m;
-    }
 
     public float Trace => m00 + m11 + m22 + m33;
     public float Determinant => m00 * m11 * m22 * m33
@@ -281,6 +282,12 @@ class Matrix4x4
                     throw new IndexOutOfRangeException("Index out of range.");
             }
         }
-
+    }
+    public void ForEach(Action<uint, uint, float> action)
+    {
+        action(0, 0, m00); action(0, 1, m01); action(0, 2, m02); action(0, 3, m03);
+        action(1, 0, m10); action(1, 1, m11); action(1, 2, m12); action(1, 3, m13);
+        action(2, 0, m20); action(2, 1, m21); action(2, 2, m22); action(2, 3, m23);
+        action(3, 0, m30); action(3, 1, m31); action(3, 2, m32); action(3, 3, m33);
     }
 }
