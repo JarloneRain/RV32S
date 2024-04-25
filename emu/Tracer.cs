@@ -26,20 +26,16 @@ struct InstInfo
     public string Text { get; set; }
 }
 
-class Tracer
+partial class Tracer
 {
-    public bool TracerOn { get; set; }
-    public bool InstTracerOn { get; set; }
-    public bool FuncTracerOn { get; set; }
-    public bool MemRTracerOn { get; set; }
-    public bool MemWTracerOn { get; set; }
+    public bool TracerOn { get; set; } = false;
 
-    Dictionary<uint, InstInfo> instInfos = new();
+    readonly Dictionary<uint, InstInfo> instInfos = new();
 
-    Dictionary<uint, XTracer> tracer = new Dictionary<uint, XTracer> { [0] = new XTracer() };
+    readonly Dictionary<uint, XTracer> traces = new() { [0] = new XTracer() };
 
-    List<FuncInfo> funcInfos = new();
-    Stack<uint> callStack = new();
+    readonly List<FuncInfo> funcInfos = [];
+    readonly Stack<uint> callStack = new();
 
     uint t = 0;
     public uint T
@@ -47,23 +43,26 @@ class Tracer
         get => t; set
         {
             if (!TracerOn) return;
-            if (!tracer.ContainsKey(value))
+            if (!traces.ContainsKey(value))
             {
-                tracer.Add(value, new XTracer());
+                traces.Add(value, new XTracer());
             }
             t = value;
         }
     }
 
+    [GeneratedRegex(@"(?<funcPC>[0-9A-Fa-f]+) <(?<funcName>\w+)>:")]
+    private static partial Regex funcRegex();
+    [GeneratedRegex(@"(?<instPC>[0-9A-Fa-f]+):\s*(?<instCode>[0-9A-Fa-f]+)\s+(?<instText>.*)")]
+    private static partial Regex instRegex();
+
     public void Init(string path)
     {
         if (!TracerOn) return;
-        var funcRegex = new Regex(@"(?<funcPC>[0-9A-Fa-f]+) <(?<funcName>\w+)>:");
-        var instRegex = new Regex(@"(?<instPC>[0-9A-Fa-f]+):\s*(?<instCode>[0-9A-Fa-f]+)\s+(?<instText>.*)");
         var lines = File.ReadAllLines(path);
         foreach (var line in lines)
         {
-            var funcMatch = funcRegex.Match(line);
+            var funcMatch = funcRegex().Match(line);
             if (funcMatch.Success)
             {
                 funcInfos.Add(new FuncInfo
@@ -72,7 +71,7 @@ class Tracer
                     Name = funcMatch.Groups["funcName"].Value
                 });
             }
-            var instMatch = instRegex.Match(line);
+            var instMatch = instRegex().Match(line);
             if (instMatch.Success)
             {
                 instInfos.Add(
@@ -89,19 +88,19 @@ class Tracer
     public void InstTrace(uint pc)
     {
         if (!TracerOn) return;
-        tracer[T].Inst += $"{pc:X8} : {instInfos[pc].Text}\n";
+        traces[T].Inst += $"{pc:X8} : {instInfos[pc].Text}\n";
     }
 
     public void MemReadTrace(uint addr, int bytes, uint value)
     {
         if (!TracerOn) return;
-        tracer[T].MemR += $"\t\tRead  {bytes} bytes from 0x{addr:X8} : 0x{value:X8} {(int)value}\n";
+        traces[T].MemR += $"\t\tRead  {bytes} bytes from 0x{addr:X8} : 0x{value:X8} {(int)value,12} {value.WordTo<float>()}\n";
     }
 
     public void MemWriteTrace(uint addr, int bytes, uint value)
     {
         if (!TracerOn) return;
-        tracer[T].MemW += $"\t\tWrtie {bytes} bytes to   0x{addr:X8} : 0x{value:X8} {(int)value}\n";
+        traces[T].MemW += $"\t\tWrtie {bytes} bytes to   0x{addr:X8} : 0x{value:X8} {(int)value,12} {value.WordTo<float>()}\n";
     }
 
     public void FuncTrace(uint snpc, uint dnpc)
@@ -110,14 +109,14 @@ class Tracer
         if (callStack.TryPeek(out uint top) && top == dnpc)
         {
             callStack.Pop();
-            tracer[T].Func += $"\t{new string(' ', 2 * callStack.Count)}ret\n";
+            traces[T].Func += $"\t{new string(' ', 2 * callStack.Count)}ret\n";
             return;
         }
         foreach (var funcInfo in funcInfos)
         {
             if (funcInfo.PC == dnpc)
             {
-                tracer[T].Func += $"\t{new string(' ', 2 * callStack.Count)}call [0x{dnpc:X8}]@{funcInfo.Name}\n";
+                traces[T].Func += $"\t{new string(' ', 2 * callStack.Count)}call [0x{dnpc:X8}]@{funcInfo.Name}\n";
                 callStack.Push(snpc);
                 return;
             }
@@ -134,8 +133,10 @@ class Tracer
         Console.ForegroundColor = ConsoleColor.DarkYellow;
         for (uint i = T >= n ? T - n + 1 : 1; i <= T; i++)
         {
-            Console.Write(tracer[i]);
+            Console.Write(traces[i]);
         }
         Console.ResetColor();
     }
+
+
 }

@@ -2,8 +2,8 @@
 .*/
 bin/
 obj/
-text.txt
-opcode.txt
+*.txt
+*.bin
 RV32S.sln
 cst/
 !.gitignore

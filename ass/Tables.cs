@@ -5,7 +5,7 @@ namespace Ass;
 
 static class TypeTable
 {
-    public enum InstTypeEnum { D, U, I, O, E, S, R, B, J, R4, P_WORD }
+    public enum InstTypeEnum { D, U, I, O, E, S, R, B, J, R4, P_WORD, Y }
 
     public static readonly Dictionary<uint, InstTypeEnum> InstType = new()
     {
@@ -23,13 +23,20 @@ static class TypeTable
         [0b1110011] = InstTypeEnum.E,
         #endregion
         #region F
-        [0b0000111] = InstTypeEnum.O,//flw
+        [0b0000111] = InstTypeEnum.O,   //flw
         [0b0100111] = InstTypeEnum.S,
         [0b1000011] = InstTypeEnum.R4,
         [0b1000111] = InstTypeEnum.R4,
         [0b1001011] = InstTypeEnum.R4,
         [0b1001111] = InstTypeEnum.R4,
         [0b1010011] = InstTypeEnum.R,
+        #endregion
+        #region S
+        [0b1010111] = InstTypeEnum.Y,
+        [0b1011011] = InstTypeEnum.R,
+        [0b1011111] = InstTypeEnum.R4,
+        [0b1111011] = InstTypeEnum.O,   //sml(d)
+        [0b1111111] = InstTypeEnum.S,
         #endregion
     };
 
@@ -122,6 +129,31 @@ static class InstTable
         ["fcvt.s.wu"] = 0b11010000000100000000000001010011,
         ["fmv.w.x"] = 0b11110000000000000000000001010011,
         #endregion
+        #region S
+        ["smmv.f.e"] = 0b00000000000000000000000001010111,
+        ["smmv.e.f"] = 0b00000010000000000000000001010111,
+        ["smtsr"] = 0b00000000000000000001000001010111,
+        ["smtsr"] = 0b00000010000000000001000001010111,
+        ["smtmr"] = 0b00000100000000000001000001010111,
+        ["smtmc"] = 0b00000110000000000001000001010111,
+        ["smtar"] = 0b00001000000000000001000001010111,
+        ["smtac"] = 0b00001010000000000001000001010111,
+        ["smtt"] = 0b00000000000000000001000001011011,
+        ["smgen"] = 0b00000000000000000000000001011011,
+        ["smgend"] = 0b00000010000000000000000001011011,
+        ["sml"] = 0b00000000000000000000000001111011,
+        ["smld"] = 0b00000000000000000001000001111011,
+        ["sms"] = 0b00000000000000000000000001111111,
+        ["smsd"] = 0b00000000000000000001000001111111,
+        ["smtr"] = 0b00000100000000000001000001011011,
+        ["smdet"] = 0b00000110000000000001000001011011,
+        ["smadd"] = 0b00000000000000000010000001011011,
+        ["smsub"] = 0b00000010000000000010000001011011,
+        ["smmul"] = 0b00000100000000000010000001011011,
+        ["smdiv"] = 0b00000110000000000010000001011011,
+        ["smmmp"] = 0b00001000000000000010000001011011,
+        ["smma"] = 0b00000000000000000000000001011111,
+        #endregion
     };
 }
 
@@ -198,6 +230,40 @@ static class RegTable
         ["ft9"] = 29,
         ["ft10"] = 30,
         ["ft11"] = 31,
+        #endregion
+        #region S
+        ["mt0"] = 0,
+        ["mt1"] = 1,
+        ["mt2"] = 2,
+        ["mt3"] = 3,
+        ["mt4"] = 4,
+        ["mt5"] = 5,
+        ["mt6"] = 6,
+        ["mt7"] = 7,
+        ["ms0"] = 8,
+        ["ms1"] = 9,
+        ["ma0"] = 10,
+        ["ma1"] = 11,
+        ["ma2"] = 12,
+        ["ma3"] = 13,
+        ["ma4"] = 14,
+        ["ma5"] = 15,
+        ["ma6"] = 16,
+        ["ma7"] = 17,
+        ["ms2"] = 18,
+        ["ms3"] = 19,
+        ["ms4"] = 20,
+        ["ms5"] = 21,
+        ["ms6"] = 22,
+        ["ms7"] = 23,
+        ["ms8"] = 24,
+        ["ms9"] = 25,
+        ["ms10"] = 26,
+        ["ms11"] = 27,
+        ["mt8"] = 28,
+        ["mt9"] = 29,
+        ["mt10"] = 30,
+        ["mt11"] = 31,
         #endregion
     };
 

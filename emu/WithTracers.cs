@@ -1,30 +1,22 @@
 namespace RV32Semu;
 
-class CpuWithTracer : Cpu
+class CpuWithTracer(Decoder decoder, Gpr gpr, Memory memory, Tracer tracer) : Cpu(decoder, gpr, memory)
 {
-    Tracer tracer;
-    public CpuWithTracer(Decoder decoder, Gpr gpr, Memory memory, Tracer tracer)
-    : base(decoder, gpr,memory)
-    {
-        this.tracer = tracer;
-    }
+    readonly Tracer tracer = tracer;
+
     protected override void ExecOnce()
     {
+        tracer.T++;
         tracer.InstTrace(pc);
         base.ExecOnce();
+        tracer.FuncTrace(decoder.Snpc, decoder.Dnpc);
     }
 }
 
 
-class MemoryWithTracer : Memory
+class MemoryWithTracer(Tracer tracer) : Memory()
 {
-    Tracer tracer;
-
-    public MemoryWithTracer(Tracer tracer)
-    : base()
-    {
-        this.tracer = tracer;
-    }
+    readonly Tracer tracer = tracer;
 
     public override uint this[uint addr, int bytes]
     {

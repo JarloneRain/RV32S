@@ -1,17 +1,16 @@
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using static RV32Semu.Utils;
 
 namespace RV32Semu;
 
 class Ebreak : Exception { }
-
+class Ecall : Exception { }
+class CpuFinishException : Exception { }
 
 class Cpu
 {
     const uint PC_DEFAULT = 0x80000000;
+    public bool IsFinish { get; set; } = false;
     internal Decoder decoder;
     internal Gpr gpr;
     internal Memory memory;
@@ -33,6 +32,8 @@ class Cpu
 
     protected virtual void ExecOnce()
     {
+        if (IsFinish) throw new CpuFinishException();
+
         uint inst = memory[pc, 4];
 
         decoder.Inst = inst;
@@ -51,23 +52,12 @@ class Cpu
         {
             ExecOnce();
         }
-
     }
 
-    public void PrintGpr()
-    {
-        Console.ForegroundColor = ConsoleColor.DarkMagenta;
-        Console.WriteLine($"pc   :{pc:X8} {pc}");
-        foreach (var reg in Enum.GetValues<Gpr.REG_ENUM_X>())
-        {
-            Console.WriteLine($"{reg,-5}:{gpr.X[(int)reg]:X8} {gpr.X[(int)reg]}");
-        }
-        foreach (var reg in Enum.GetValues<Gpr.REG_ENUM_F>())
-        {
-            Console.WriteLine($"{reg,-5}:{gpr.F[(int)reg]}");
-        }
-        Console.ResetColor();
-    }
+    public void PrintGpr() => gpr.Print();
+
+    public void PrintMem(uint addr, uint words) => memory.Print(addr, words);
+
 }
 
 class Decoder
@@ -133,7 +123,7 @@ class InstExcuter
             // ebreak 
             ("00000000000100000000000001110011",() => throw new Ebreak()),
             // ecall  
-            ("00000000000000000000000001110011",()=>ToDo("ecall")),
+            ("00000000000000000000000001110011",()=>throw new Ecall()),
             // fence  
             ("0000.............000.....0001111",()=>ToDo("fence")),
 
@@ -218,9 +208,9 @@ class InstExcuter
 #region F
             
             //FLW
-            (".................010.....0000111",()=>r.F[d.Rd]= m[(uint)(r.X[d.Rs1]+d.ImmI),4].Bin2<float>()),
+            (".................010.....0000111",()=>r.F[d.Rd]= m[(uint)(r.X[d.Rs1]+d.ImmI),4].WordTo<float>()),
             //FSW
-            (".................010.....0100111",()=>m[(uint)(r.X[d.Rs1]+d.ImmS),4]=r.F[d.Rd].Float2Bin()),
+            (".................010.....0100111",()=>m[(uint)(r.X[d.Rs1]+d.ImmS),4]=r.F[d.Rd].ToWord()),
             //FMADD.S
             (".....00..................1000011",()=>r.F[d.Rd]=r.F[d.Rs1]*r.F[d.Rs2]+r.F[d.Rs3]),
             //FMSUB.S
@@ -240,11 +230,11 @@ class InstExcuter
             //FSQRT.S
             ("010110000000.............1010011",()=>r.F[d.Rd]=(float)Math.Sqrt(r.F[d.Rs1])),
             //FSGNJ.S
-            ("0010000..........000.....1010011",()=>r.F[d.Rd]=(r.F[d.Rs2].Bit(31)|r.F[d.Rs1].Bits(30,0)).Bin2<float>()),
+            ("0010000..........000.....1010011",()=>r.F[d.Rd]=(r.F[d.Rs2].Bit(31)|r.F[d.Rs1].Bits(30,0)).WordTo<float>()),
             //FSGNJN.S
-            ("0010000..........001.....1010011",()=>r.F[d.Rd]=(~r.F[d.Rs2].Bit(31)|r.F[d.Rs1].Float2Bin().Bits(30,0)).Bin2<float>()),
+            ("0010000..........001.....1010011",()=>r.F[d.Rd]=(~r.F[d.Rs2].Bit(31)|r.F[d.Rs1].ToWord().Bits(30,0)).WordTo<float>()),
             //FSGNJX.S
-            ("0010000..........010.....1010011",()=>r.F[d.Rd]=(((r.F[d.Rs2].Bit(31))^(r.F[d.Rs2].Bit(31)))|r.F[d.Rs1].Bits(30,0)).Bin2<float>()),
+            ("0010000..........010.....1010011",()=>r.F[d.Rd]=(((r.F[d.Rs2].Bit(31))^(r.F[d.Rs2].Bit(31)))|r.F[d.Rs1].Bits(30,0)).WordTo<float>()),
             //FMIN.S
             ("0010100..........000.....1010011",()=>r.F[d.Rd]=Math.Min(r.F[d.Rs1],r.F[d.Rs2])),
             //FMAX.S
@@ -254,7 +244,7 @@ class InstExcuter
             //FCVT.WU.S
             ("110000000001.............1010011",()=>r.X[d.Rd]=(uint)r.F[d.Rs1]),
             //FMV.X.W
-            ("111000000000.....000.....1010011",()=>r.X[d.Rd]=r.F[d.Rs1].Float2Bin()),
+            ("111000000000.....000.....1010011",()=>r.X[d.Rd]=r.F[d.Rs1].ToWord()),
             //FEQ.S
             ("1010000..........010.....1010011",()=>r.X[d.Rd]=r.F[d.Rs1]==r.F[d.Rs2]?1u:0u),
             //FLT.S
@@ -268,7 +258,7 @@ class InstExcuter
             //FCVT.S.WU
             ("110100000001.............1010011",()=>r.F[d.Rd]=r.X[d.Rs1]),
             //FMV.W.X
-            ("111100000000.....000.....1010011",()=>r.F[d.Rd]=r.X[d.Rs1].Bin2<float>()),
+            ("111100000000.....000.....1010011",()=>r.F[d.Rd]=r.X[d.Rs1].WordTo<float>()),
 #endregion
 #region S
             // smmv.f.e
@@ -294,13 +284,13 @@ class InstExcuter
             //smgend
             ("0000001..........000.....1011011",()=>r.M[d.Rd]=new((i,j)=>i==j?r.F[d.Rd]:0)),
             //sml
-            (".................000.....1111011",()=>r.M[d.Rd]=new((i,j)=>m[(uint)(r.X[d.Rs1]+d.ImmI+4*((4*i)+j)),4].Bin2<float>())),
+            (".................000.....1111011",()=>r.M[d.Rd]=new((i,j)=>m[(uint)(r.X[d.Rs1]+d.ImmI+4*((4*i)+j)),4].WordTo<float>())),
             //smld
-            (".................001.....1111011",()=>r.M[d.Rd]=new((i,j)=>i==j?m[(uint)(r.X[d.Rs1]+d.ImmI+2*(i+j)),4].Bin2<float>():0)),
+            (".................001.....1111011",()=>r.M[d.Rd]=new((i,j)=>i==j?m[(uint)(r.X[d.Rs1]+d.ImmI+2*(i+j)),4].WordTo<float>():0)),
             //sms
-            (".................000.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>m[(uint)(r.X[d.Rs1]+d.ImmS+4*((4*i)+j)),4]=mij.Float2Bin())),
-            //sms
-            (".................001.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>{if(i==j) m[(uint)(r.X[d.Rs1] + d.ImmS + 2*(i+j)), 4] = mij.Float2Bin(); })),
+            (".................000.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>m[(uint)(r.X[d.Rs1]+d.ImmS+4*((4*i)+j)),4]=mij.ToWord())),
+            //smsd
+            (".................001.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>{if(i==j) m[(uint)(r.X[d.Rs1] + d.ImmS + 2*(i+j)), 4] = mij.ToWord(); })),
             //smtr
             ("0000010..........001.....1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Trace),
             //smdet

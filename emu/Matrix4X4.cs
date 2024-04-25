@@ -99,70 +99,12 @@ class Matrix4x4
         }
         return that;
     }
-    public Matrix4x4 Transpose
-    {
-        get
-        {
-            Matrix4x4 that = new();
-            for (uint row = 0; row < 4; row++)
-            {
-                for (uint col = 0; col < 4; col++)
-                {
-                    that[row, col] = this[col, row];
-                }
-            }
-            return that;
-        }
-    }
+    public Matrix4x4 Transpose => new((i, j) => this[j, i]);
 
-    public static Matrix4x4 operator +(Matrix4x4 a, Matrix4x4 b)
-    {
-        Matrix4x4 c = new();
-        for (uint row = 0; row < 4; row++)
-        {
-            for (uint col = 0; col < 4; col++)
-            {
-                c[row, col] = a[row, col] + b[row, col];
-            }
-        }
-        return c;
-    }
-    public static Matrix4x4 operator -(Matrix4x4 a, Matrix4x4 b)
-    {
-        Matrix4x4 c = new();
-        for (uint row = 0; row < 4; row++)
-        {
-            for (uint col = 0; col < 4; col++)
-            {
-                c[row, col] = a[row, col] - b[row, col];
-            }
-        }
-        return c;
-    }
-    public static Matrix4x4 operator *(Matrix4x4 a, Matrix4x4 b)
-    {
-        Matrix4x4 c = new();
-        for (uint row = 0; row < 4; row++)
-        {
-            for (uint col = 0; col < 4; col++)
-            {
-                c[row, col] = a[row, col] * b[row, col];
-            }
-        }
-        return c;
-    }
-    public static Matrix4x4 operator /(Matrix4x4 a, Matrix4x4 b)
-    {
-        Matrix4x4 c = new();
-        for (uint row = 0; row < 4; row++)
-        {
-            for (uint col = 0; col < 4; col++)
-            {
-                c[row, col] = a[row, col] / b[row, col];
-            }
-        }
-        return c;
-    }
+    public static Matrix4x4 operator +(Matrix4x4 a, Matrix4x4 b) => new((i, j) => a[i, j] + b[i, j]);
+    public static Matrix4x4 operator -(Matrix4x4 a, Matrix4x4 b) => new((i, j) => a[i, j] - b[i, j]);
+    public static Matrix4x4 operator *(Matrix4x4 a, Matrix4x4 b) => new((i, j) => a[i, j] * b[i, j]);
+    public static Matrix4x4 operator /(Matrix4x4 a, Matrix4x4 b) => new((i, j) => a[i, j] / b[i, j]);
     public static Matrix4x4 operator %(Matrix4x4 a, Matrix4x4 b)
     {
         Matrix4x4 result = new();
@@ -204,9 +146,9 @@ class Matrix4x4
                                 - m03 * m11 * m22 * m30
                                 - m03 * m12 * m20 * m31
                                 + m03 * m12 * m21 * m30;
-    public float this[uint i, uint j]
+    public float this[uint row, uint col]
     {
-        get => (i, j) switch
+        get => (row, col) switch
         {
             (0, 0) => m00,
             (0, 1) => m01,
@@ -224,11 +166,11 @@ class Matrix4x4
             (3, 1) => m31,
             (3, 2) => m32,
             (3, 3) => m33,
-            _ => throw new IndexOutOfRangeException("Index out of range.")
+            _ => throw new IndexOutOfRangeException($"Index [{row}, {col}] out of range.")
         };
         set
         {
-            switch (i, j)
+            switch (row, col)
             {
                 case (0, 0):
                     m00 = value;
@@ -279,7 +221,7 @@ class Matrix4x4
                     m33 = value;
                     break;
                 default:
-                    throw new IndexOutOfRangeException("Index out of range.");
+                    throw new IndexOutOfRangeException($"Index [{row}, {col}] out of range.");
             }
         }
     }
@@ -289,5 +231,12 @@ class Matrix4x4
         action(1, 0, m10); action(1, 1, m11); action(1, 2, m12); action(1, 3, m13);
         action(2, 0, m20); action(2, 1, m21); action(2, 2, m22); action(2, 3, m23);
         action(3, 0, m30); action(3, 1, m31); action(3, 2, m32); action(3, 3, m33);
+    }
+    public string TabString(string tab)
+    {
+        return @$"{tab}{m00:F6} {m01:F6} {m02:F6} {m03:F6}
+{tab}{m10:F6} {m11:F6} {m12:F6} {m13:F6}
+{tab}{m20:F6} {m21:F6} {m22:F6} {m23:F6}
+{tab}{m30:F6} {m31:F6} {m32:F6} {m33:F6}";
     }
 }

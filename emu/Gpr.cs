@@ -20,6 +20,15 @@ class Gpr
         fs2, fs3, fs4, fs5, fs6, fs7, fs8, fs9, fs10, fs11,
         ft8, ft9, ft10, ft11
     }
+
+    public enum REG_ENUM_M
+    {
+        mt0, mt1, mt2, mt3, mt4, mt5, mt6, mt7,
+        ms0, ms1,
+        ma0, ma1, ma2, ma3, ma4, ma5, ma6, ma7,
+        ms2, ms3, ms4, ms5, ms6, ms7, ms8, ms9, ms10, ms11,
+        mt8, mt9, mt10, mt11
+    }
     public readonly uint[] X = new uint[32];
     public readonly float[] F = new float[32];
     public readonly Matrix4x4[] M = [new(), new(),
@@ -31,7 +40,19 @@ class Gpr
 
     public void Print()
     {
+        Console.ForegroundColor = ConsoleColor.DarkMagenta;
         foreach (var reg in Enum.GetValues<REG_ENUM_X>())
-            Console.WriteLine($"{reg,6}:0x{X[(int)reg]}={(int)X[(int)reg]}");
+        {
+            Console.WriteLine($"{reg,-5}:{X[(int)reg]:X8} {X[(int)reg]}");
+        }
+        foreach (var reg in Enum.GetValues<REG_ENUM_F>())
+        {
+            Console.WriteLine($"{reg,-5}:{F[(int)reg]}");
+        }
+        foreach (var reg in Enum.GetValues<REG_ENUM_M>())
+        {
+            Console.WriteLine($"{reg,-5}:{M[(int)reg].TabString("\t")}");
+        }
+        Console.ResetColor();
     }
 }

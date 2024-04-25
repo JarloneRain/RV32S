@@ -37,14 +37,14 @@ static class Utils
         return (int)x;
     }
 
-    public static T Bin2<T>(this uint x) where T : unmanaged
+    public static T WordTo<T>(this uint x) where T : unmanaged
     {
         unsafe
         {
             return *(T*)&x;
         }
     }
-    public static uint Float2Bin(this float x)
+    public static uint ToWord<T>(this T x) where T : unmanaged
     {
         unsafe
         {
