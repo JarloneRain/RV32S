@@ -262,27 +262,27 @@ class InstExcuter
 #endregion
 #region S
             // smmv.f.e
-            ("....000..........000.....1010111",()=>r.F[d.Rd]=r.M[d.Rs1][d.I,d.J]),
+            ("....000..................1010111",()=>r.F[d.Rd]=r.M[d.Rs1][d.I,d.J]),
             // smmv.e.f
-            ("....001..........000.....1010111",()=>r.M[d.Rd][d.I,d.J]=r.F[d.Rs2] ),
+            ("....001..................1010111",()=>r.M[d.Rd][d.I,d.J]=r.F[d.Rs2] ),
             //smtsr
-            ("....000..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].SwapRow(d.I,d.J)),
+            ("....010..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].SwapRow(d.I,d.J)),
             //smtsr
-            ("....001..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].SwapCol(d.I,d.J)),
+            ("....011..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].SwapCol(d.I,d.J)),
             //smtmr
-            ("....010..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].MultiplyRow(r.F[d.Rs2],d.I)),
+            ("....100..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].MultiplyRow(r.F[d.Rs2],d.I)),
             //smtmc
-            ("....011..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].MultiplyCol(r.F[d.Rs2],d.I)),
+            ("....101..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].MultiplyCol(r.F[d.Rs2],d.I)),
             //smtar
-            ("....100..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].AdditionRow(r.F[d.Rs2],d.I,d.J))  ,
+            ("....110..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].AdditionRow(r.F[d.Rs2],d.I,d.J))  ,
             //smtac
-            ("....101..........001.....1010111",()=>r.M[d.Rd]=r.M[d.Rs1].AdditionCol(r.F[d.Rs2],d.I,d.J))  ,
+            ("....111..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].AdditionCol(r.F[d.Rs2],d.I,d.J))  ,
             //smtt
-            ("0000000..........001.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1].Transpose),
+            ("0000000..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1].Transpose),
             //smgen
             ("0000000..........000.....1011011",()=>r.M[d.Rd]=new((i,j)=>r.F[d.Rd])),
             //smgend
-            ("0000001..........000.....1011011",()=>r.M[d.Rd]=new((i,j)=>i==j?r.F[d.Rd]:0)),
+            ("0000000..........001.....1011011",()=>r.M[d.Rd]=new((i,j)=>i==j?r.F[d.Rd]:0)),
             //sml
             (".................000.....1111011",()=>r.M[d.Rd]=new((i,j)=>m[(uint)(r.X[d.Rs1]+d.ImmI+4*((4*i)+j)),4].WordTo<float>())),
             //smld
@@ -292,21 +292,21 @@ class InstExcuter
             //smsd
             (".................001.....1111111",()=>r.M[d.Rs2].ForEach((i,j,mij)=>{if(i==j) m[(uint)(r.X[d.Rs1] + d.ImmS + 2*(i+j)), 4] = mij.ToWord(); })),
             //smtr
-            ("0000010..........001.....1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Trace),
+            ("0000010..................1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Trace),
             //smdet
-            ("0000011..........001.....1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Determinant),
+            ("0000011..................1011011",()=>r.F[d.Rd]=r.M[d.Rs1].Determinant),
             //smadd
-            ("0000000..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1]+r.M[d.Rs2]),
+            ("0000100..................1011011",()=>r.M[d.Rd]=r.M[d.Rs1]+r.M[d.Rs2]),
             //smsub
-            ("0000001..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1]-r.M[d.Rs2]),
+            ("0000101..................1011011",()=>r.M[d.Rd]=r.M[d.Rs1]-r.M[d.Rs2]),
             //smmul
-            ("0000010..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1]*r.M[d.Rs2]),
+            ("0000110..................1011011",()=>r.M[d.Rd]=r.M[d.Rs1]*r.M[d.Rs2]),
             //smdiv
-            ("0000011..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1]/r.M[d.Rs2]),
+            ("0000111..................1011011",()=>r.M[d.Rd]=r.M[d.Rs1]/r.M[d.Rs2]),
             //smmmp
-            ("0000100..........010.....1011011",()=>r.M[d.Rd]=r.M[d.Rs1]%r.M[d.Rs2]),
-            //smmadd
-            (".....00..........000.....1011111",()=>r.M[d.Rd]=r.M[d.Rs1]%r.M[d.Rs2]+r.M[d.Rs3]),
+            ("0001000..................1011011",()=>r.M[d.Rd]=r.M[d.Rs1]%r.M[d.Rs2]),
+            //smma
+            (".....00..................1011111",()=>r.M[d.Rd]=r.M[d.Rs1]%r.M[d.Rs2]+r.M[d.Rs3]),
 #endregion
             // inv    
             ("................................",() => throw new Exception($"Unknown instruction:{d.Inst:X8}"))
@@ -315,10 +315,10 @@ class InstExcuter
     public void Execute(uint inst)
     {
         string instStr = Convert.ToString(inst, 2).PadLeft(32, '0');
-        foreach (var executer in execTable)
+        foreach (var (InstPattern, Act) in execTable)
         {
-            if (Regex.IsMatch(instStr, executer.InstPattern))
-            { executer.Act(); return; }
+            if (Regex.IsMatch(instStr, InstPattern))
+            { Act(); return; }
         }
     }
 }
