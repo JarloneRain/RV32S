@@ -310,15 +310,16 @@ S指令集除了依赖的F指令集所携带的32个浮点寄存器外，还有3
 
 ```verilog
 assign 本阶段的ready = 下一阶段的ready | !本阶段的valid;
-always@(posedge clk) if(本阶段的ready)
-    那么本阶段的valid <= 上一阶段的valid;
+always@(posedge clk)
+    本阶段的valid <= 本阶段的ready & 上一阶段的valid;
 ```
 
 一些特殊的情况：
 
 1. 写回阶段没有输出到下一阶段的valid信号
-2. 当前指令流中存在分支或跳转指令时，IF不接受新的指令
-3. 当前指令流中存在写后读冲突时，ID不接受新的指令
-4. 当DATA_CACHE的valid=0时（正在读写数据），ME不接受新的指令
+2. 写回阶段总是ready的
+3. 当前指令流中存在分支或跳转指令时，IF不接受新的指令
+4. 当前指令流中存在写后读冲突时，ID不接受新的指令
+5. 当DATA_CACHE的valid=0时（正在读写数据），ME不接受新的指令
 
 上述的第2、3点的目的是用流水线停顿法解决流水线冒险。
