@@ -4,6 +4,8 @@ start:
         addi    sp, sp, 1024
         jal     ra,main 
         ebreak
+loop:
+        jal     zero,loop
 
 check:
         beq     a0, zero, .L1

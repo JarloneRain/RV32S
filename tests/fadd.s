@@ -3,6 +3,8 @@ start:
         addi    sp, sp, 1024
         jal     ra,main 
         ebreak
+loop:
+        jal     zero,loop
 arra:
         .word   1065353216
         .word   1073741824
