@@ -2,6 +2,7 @@
 .*/
 bin/
 obj/
+build/
 *.txt
 *.bin
 RV32S.sln

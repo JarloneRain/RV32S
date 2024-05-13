@@ -1,13 +1,15 @@
 ﻿using System.Globalization;
 
-var src = "/home/looooong/RV32S/tests";
+var build = "/home/looooong/RV32S/tests/build";
+
+string target=args[0];
 
 RV32Semu.Tracer tracer = new() { TracerOn = true };
 RV32Semu.Cpu cpu = new RV32Semu.CpuWithTracer(new RV32Semu.Decoder(), new RV32Semu.Gpr(),
                     new RV32Semu.MemoryWithTracer(tracer), tracer);
 
-cpu.Init($"{src}/{args[0]}.bin");
-tracer.Init($"{src}/{args[0]}.txt");
+cpu.Init($"{build}/{target}.bin");
+tracer.Init($"{build}/{target}.txt");
 
 try
 {
