@@ -65,24 +65,31 @@ module ALU_OUT1 (
     input [31:0] _npc,
     input [31:0] _res_R,
     input [31:0] _res_F,
-    input [31:0] _res_M[0:3][0:3],
-    //
+    input [511:0] _res_M,
+    // GPR 的数据
+    input [31:0] _rs2_R,
+    input [31:0] _rs2_F,
+    input [511:0] _rs2_M,
+    // GPR 的数据输出
+    output reg [31:0] rs2_R,
+    output reg [31:0] rs2_F,
+    output reg [511:0] rs2_M,
     // ALU 的计算结果
     output reg [31:0] npc,
     output reg [31:0] res_R,
     output reg [31:0] res_F,
-    output reg [31:0] res_M[0:3][0:3]
+    output reg [511:0] res_M
 );
     integer i, j;
     always @(posedge clk) begin
         if (ready) begin
+            rs2_R <= _rs2_R;
+            rs2_F <= _rs2_F;
             npc   <= _npc;
             res_R <= _res_R;
             res_F <= _res_F;
-            for (i = 0; i < 4; i = i + 1)
-            for (j = 0; j < 4; j = j + 1) begin
-                res_M[i][j] <= _res_M[i][j];
-            end
+            rs2_M <= _rs2_M;
+            res_M <= _res_M;
         end
     end
 endmodule

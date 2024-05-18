@@ -26,8 +26,6 @@ module RAM (
     output reg bvalid,
     input bready
 );
-    // 1MB
-    reg [7:0] memory[MEM_BASE:MEM_SIZE-1];
     // 读取部分
     //    读地址
     reg _arvalid;
@@ -49,6 +47,20 @@ module RAM (
     //    写响应
     //端口都声明完了，这里就不用再写了
 
+    import "DPI-C" function int mem_read(input int addr);
+
+
+    import "DPI-C" function bit mem_write(
+        input int addr,
+        input int data,
+        input bit wstrb0,
+        input bit wstrb1,
+        input bit wstrb2,
+        input bit wstrb3
+    );
+
+    import "DPI-C" function void bad_finish();
+
     always @(posedge clk) begin
         if (rst) begin
             _arvalid <= 0;
@@ -62,7 +74,7 @@ module RAM (
                 _araddr  <= araddr;
                 rvalid   <= 0;
             end else if (_arvalid) begin  // 读取地址可用，读取数据
-                rdata <= {memory[_araddr+3], memory[_araddr+2], memory[_araddr+1], memory[_araddr]};
+                rdata  <= mem_read(_araddr);
                 rvalid <= 1;
             end else if (rready & rvalid) begin  // 数据已被读走
                 rvalid   <= 0;
@@ -76,14 +88,20 @@ module RAM (
                 _wdata   <= wdata;
                 _wstrb   <= wstrb;
             end else if (_awvalid & _wvalid) begin
-                if (MEM_BASE <= _awaddr & _awaddr < MEM_BASE + MEM_SIZE) begin
-                    memory[_awaddr+0] <= _wstrb[0] ? _wdata[7:0] : memory[_awaddr];
-                    memory[_awaddr+1] <= _wstrb[1] ? _wdata[15:8] : memory[_awaddr+1];
-                    memory[_awaddr+2] <= _wstrb[2] ? _wdata[23:16] : memory[_awaddr+2];
-                    memory[_awaddr+3] <= _wstrb[3] ? _wdata[31:24] : memory[_awaddr+3];
-                    bresp             <= AXI_RESP_OK;
+                // if (MEM_BASE <= _awaddr & _awaddr < MEM_BASE + MEM_SIZE) begin
+                //     memory[_awaddr+0] <= _wstrb[0] ? _wdata[7:0] : memory[_awaddr];
+                //     memory[_awaddr+1] <= _wstrb[1] ? _wdata[15:8] : memory[_awaddr+1];
+                //     memory[_awaddr+2] <= _wstrb[2] ? _wdata[23:16] : memory[_awaddr+2];
+                //     memory[_awaddr+3] <= _wstrb[3] ? _wdata[31:24] : memory[_awaddr+3];
+                //     bresp             <= AXI_RESP_OK;
+                // end else begin
+                //     bresp <= AXI_RESP_DECERR;
+                // end
+                if (!mem_write(_awaddr, _wdata, _wstrb[0], _wstrb[1], _wstrb[2], _wstrb[3])) begin
+                    bresp <= `AXI_RESP_DECERR;
+                    bad_finish();
                 end else begin
-                    bresp <= AXI_RESP_DECERR;
+                    bresp <= `AXI_RESP_OK;
                 end
                 bvalid   <= 1;
                 _awvalid <= 0;

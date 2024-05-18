@@ -1,8 +1,8 @@
 `include "define.v"
 
-
 module ME_CTRL (
     input clk,
+    input rst,
     // 通信协议
     output reg valid,
     output ready,
@@ -66,24 +66,20 @@ module ALU_OUT2 (
     input [31:0] _npc,
     input [31:0] _res_R,
     input [31:0] _res_F,
-    input [31:0] _res_M[0:3][0:3],
+    input [511:0] _res_M,
     //
     // ALU 的计算结果
     output reg [31:0] npc,
     output reg [31:0] res_R,
     output reg [31:0] res_F,
-    output reg [31:0] res_M[0:3][0:3]
+    output reg [511:0] res_M
 );
-    integer i, j;
     always @(posedge clk) begin
         if (ready) begin
             npc   <= _npc;
             res_R <= _res_R;
             res_F <= _res_F;
-            for (i = 0; i < 4; i = i + 1)
-            for (j = 0; j < 4; j = j + 1) begin
-                res_M[i][j] <= _res_M[i][j];
-            end
+            res_M <= _res_M;
         end
     end
 endmodule

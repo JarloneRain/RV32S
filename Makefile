@@ -44,5 +44,11 @@ $(SIM_BIN): $(VSRCS) $(CSRCS)
 sim: $(SIM_BIN) $(TEST_FILE)
 	$(SIM_BIN) $(TEST_FILE)
 
+YOSYS_DIR=sim/yosys
+
+yosys: $(YOSYS_DIR)/script.ys $(VSRCS)
+	cd $(YOSYS_DIR) && yosys script.ys
+	dot -Tpng $(YOSYS_DIR)/my_design.dot -o $(YOSYS_DIR)/my_design.png
+
 clean:
 	rm $(TEST_BUILD_DIR)/*

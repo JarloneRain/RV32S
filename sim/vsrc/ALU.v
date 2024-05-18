@@ -18,15 +18,18 @@ module ALU (
     input [31:0] pc,
     input [31:0] src1R,
     input [31:0] src2R,
+    input [31:0] src3R,
     input [31:0] src1F,
     input [31:0] src2F,
-    input [31:0] src1M[0:31][0:3][0:3],
-    input [31:0] src2M[0:31][0:3][0:3],
+    input [31:0] src3F,
+    input [511:0] src1M,
+    input [511:0] src2M,
+    input [511:0] src3M,
     // 计算结果
     output reg [31:0] npc,
     output reg [31:0] res_R,
     output reg [31:0] res_F,
-    output reg [31:0] res_M[0:31][0:3][0:3]
+    output reg [511:0] res_M
 );
     wire [31:0] snpc;
     assign snpc = pc + 4;

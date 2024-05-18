@@ -1,0 +1,24 @@
+
+# 读取定义文件
+read_verilog ../vsrc/define.v
+
+# 读取其他 Verilog 文件
+read_verilog ../vsrc/ALU.v
+read_verilog ../vsrc/AR.v
+read_verilog ../vsrc/CPU.v
+read_verilog ../vsrc/DC.v
+read_verilog ../vsrc/EX.v
+read_verilog ../vsrc/ID.v
+read_verilog ../vsrc/IF.v
+read_verilog ../vsrc/ME.v
+read_verilog ../vsrc/WB.v
+
+# 执行优化
+hierarchy -check -top CPU
+proc; opt; fsm; opt; techmap; opt
+
+# 生成综合图
+show -format dot -prefix my_design CPU
+
+# 写出结果
+write_verilog -noattr -noexpr output.v

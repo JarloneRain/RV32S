@@ -3,6 +3,8 @@
 
 `define fzero 32'h00000000
 
+`define PC_BASE 32'h80000000
+
 `define REG_GROUP_INVALID 2'b00
 `define REG_GROUP_R 2'b01
 `define REG_GROUP_F 2'b10
@@ -12,11 +14,6 @@
 `define AXI_RESP_EXOK 2'b01
 `define AXI_RESP_SLVERR 2'b10
 `define AXI_RESP_DECERR 2'b11
-
-`define MEM_BASE 32'h80000000
-`define MEM_SIZE 32'h1000000 //1MB
-
-`define PC_BASE 32'h80000000
 
 // add zero zero zero
 `define INST_CODE_NOP 32'b00000000000000000000000000110011 

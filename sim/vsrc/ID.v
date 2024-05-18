@@ -245,16 +245,13 @@ endmodule
 
 module PC2 (
     input clk,
-    input rst,
     input ready,
     //
     input [31:0] PC1_pc,
     output reg [31:0] pc
 );
     always @(posedge clk) begin
-        if (!rst) begin
-            pc <= 0;
-        end else if (ready) begin
+        if (ready) begin
             pc <= PC1_pc;
         end
     end

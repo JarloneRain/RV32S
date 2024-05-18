@@ -4,6 +4,7 @@ module AR (
     // AXI 读地址通道兼指令地址
     input [31:0] pcraddr,
     input pcrvalid,
+    output pcrready,
     input [31:0] araddr,
     input arvalid,
     output arready,
@@ -51,11 +52,12 @@ module AR (
     output m_bready
 );
     wire data_req = arvalid | rready | awvalid | wvalid | bready;
+    assign pcrready  = m_arready & !data_req;
     assign arready   = m_arready;
     assign rdata     = m_rdata;
     assign rvalid    = m_rvalid & data_req;
     assign inst      = m_rdata;
-    assign irvalid   = m_rvalid & & !data_req;
+    assign irvalid   = m_rvalid & !data_req;
     assign awready   = m_awready;
     assign wready    = m_wready;
     assign bresp     = m_bresp;

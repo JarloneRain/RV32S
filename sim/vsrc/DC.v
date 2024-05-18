@@ -5,21 +5,19 @@ module Data_Cache (
     input clk,
     input rst,
     input ready,
+    output reg [5:0] state,
     input [6:0] _opcode,
     input [2:0] _funct3,
     input [31:0] _addr,
-    input wdata_R_valid,
     input [31:0] wdata_R,
-    input wdata_F_valid,
     input [31:0] wdata_F,
-    input wdata_M_valid,
-    input [31:0] wdata_M[0:3][0:3],
+    input [511:0] wdata_M,
     output reg rdata_R_valid,
     output [31:0] rdata_R,
     output reg rdata_F_valid,
     output [31:0] rdata_F,
     output reg rdata_M_valid,
-    output [31:0] rdata_M[0:3][0:3],
+    output [511:0] rdata_M,
     //AXI
     // AXI 读地址通道
     output [31:0] maraddr,
@@ -45,30 +43,30 @@ module Data_Cache (
 );
     integer i, j;
 
-    reg [ 5:0] state;
     reg [31:0] addr;
     reg [31:0] cache  [0:3][0:3];
     reg [ 6:0] opcode;
     reg [ 2:0] funct3;
-    assign rdata_R       = cache[0][0];
-    assign rdata_F       = cache[0][0];
-    assign rdata_M[0][0] = cache[0][0];
-    assign rdata_M[0][1] = cache[0][1];
-    assign rdata_M[0][2] = cache[0][2];
-    assign rdata_M[0][3] = cache[0][3];
-    assign rdata_M[1][0] = cache[1][0];
-    assign rdata_M[1][1] = cache[1][1];
-    assign rdata_M[1][2] = cache[1][2];
-    assign rdata_M[1][3] = cache[1][3];
-    assign rdata_M[2][0] = cache[2][0];
-    assign rdata_M[2][1] = cache[2][1];
-    assign rdata_M[2][2] = cache[2][2];
-    assign rdata_M[2][3] = cache[2][3];
-    assign rdata_M[3][0] = cache[3][0];
-    assign rdata_M[3][1] = cache[3][1];
-    assign rdata_M[3][2] = cache[3][2];
-    assign rdata_M[3][3] = cache[3][3];
-    assign mwstrb        = 1 << funct3;
+    assign rdata_R          = cache[0][0];
+    assign rdata_F          = cache[0][0];
+    assign rdata_M[31:0]    = cache[0][0];
+    assign rdata_M[63:32]   = cache[0][1];
+    assign rdata_M[95:64]   = cache[0][2];
+    assign rdata_M[127:96]  = cache[0][3];
+    assign rdata_M[159:128] = cache[1][0];
+    assign rdata_M[191:160] = cache[1][1];
+    assign rdata_M[223:192] = cache[1][2];
+    assign rdata_M[255:224] = cache[1][3];
+    assign rdata_M[287:256] = cache[2][0];
+    assign rdata_M[319:288] = cache[2][1];
+    assign rdata_M[351:320] = cache[2][2];
+    assign rdata_M[383:352] = cache[2][3];
+    assign rdata_M[415:384] = cache[3][0];
+    assign rdata_M[447:416] = cache[3][1];
+    assign rdata_M[479:448] = cache[3][2];
+    assign rdata_M[511:480] = cache[3][3];
+
+    assign mwstrb           = 1 << funct3;
     always @(posedge clk) begin
         if (rst) begin
             rdata_R_valid <= 0;

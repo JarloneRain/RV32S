@@ -7,4 +7,6 @@ build/
 *.bin
 RV32S.sln
 cst/
+sim/yosys/*
+!sim/yosys/script.ys
 !.gitignore

@@ -264,7 +264,7 @@ class InstExcuter
             // smmv.f.e
             ("....000..................1010111",()=>r.F[d.Rd]=r.M[d.Rs1][d.I,d.J]),
             // smmv.e.f
-            ("....001..................1010111",()=>r.M[d.Rd][d.I,d.J]=r.F[d.Rs2] ),
+            ("....001..................1010111",()=>r.M[d.Rd]=new Matrix4x4((i,j)=>i==d.I&&j==d.J?r.F[d.Rs2]:r.M[d.Rs1][i,j])),
             //smtsr
             ("....010..................1010111",()=>r.M[d.Rd]=r.M[d.Rs1].SwapRow(d.I,d.J)),
             //smtsr
