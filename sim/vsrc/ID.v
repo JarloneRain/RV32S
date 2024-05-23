@@ -17,19 +17,29 @@ module ID_CTRL (
     input [1:0] rs3_group,
     input [4:0] rs3_index,
     // 写寄存器
+    input I1_valid,
+    input [1:0] I1_rd_group,
+    input [4:0] I1_rd_index,
+    input I2_valid,
     input [1:0] I2_rd_group,
     input [4:0] I2_rd_index,
+    input I3_valid,
     input [1:0] I3_rd_group,
     input [4:0] I3_rd_index
 );
-    wire rs1_conflict_I2 = (rs1_group != `REG_GROUP_INVALID) && (rs1_group != `REG_GROUP_R || rs1_index != `zero5) && (rs1_group == I2_rd_group && rs1_index == I2_rd_index);
-    wire rs1_conflict_I3 = (rs1_group != `REG_GROUP_INVALID) && (rs1_group != `REG_GROUP_R || rs1_index != `zero5) && (rs1_group == I3_rd_group && rs1_index == I3_rd_index);
-    wire rs2_conflict_I2 = (rs2_group != `REG_GROUP_INVALID) && (rs2_group != `REG_GROUP_R || rs2_index != `zero5) && (rs2_group == I2_rd_group && rs2_index == I2_rd_index);
-    wire rs2_conflict_I3 = (rs2_group != `REG_GROUP_INVALID) && (rs2_group != `REG_GROUP_R || rs2_index != `zero5) && (rs2_group == I3_rd_group && rs2_index == I3_rd_index);
-    wire rs3_conflict_I2 = (rs3_group != `REG_GROUP_INVALID) && (rs3_group != `REG_GROUP_R || rs3_index != `zero5) && (rs3_group == I2_rd_group && rs3_index == I2_rd_index);
-    wire rs3_conflict_I3 = (rs3_group != `REG_GROUP_INVALID) && (rs3_group != `REG_GROUP_R || rs3_index != `zero5) && (rs3_group == I3_rd_group && rs3_index == I3_rd_index);
+    wire rs1_conflict_I1 = I1_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I1_rd_group && rs1_index == I1_rd_index);
+    wire rs1_conflict_I2 = I2_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I2_rd_group && rs1_index == I2_rd_index);
+    wire rs1_conflict_I3 = I3_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I3_rd_group && rs1_index == I3_rd_index);
 
-    wire conflict = rs1_conflict_I2 || rs1_conflict_I3 || rs2_conflict_I2 || rs2_conflict_I3 || rs3_conflict_I2 || rs3_conflict_I3;
+    wire rs2_conflict_I1 = I1_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I1_rd_group && rs2_index == I1_rd_index);
+    wire rs2_conflict_I2 = I2_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I2_rd_group && rs2_index == I2_rd_index);
+    wire rs2_conflict_I3 = I3_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I3_rd_group && rs2_index == I3_rd_index);
+
+    wire rs3_conflict_I1 = I1_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I1_rd_group && rs3_index == I1_rd_index);
+    wire rs3_conflict_I2 = I2_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I2_rd_group && rs3_index == I2_rd_index);
+    wire rs3_conflict_I3 = I3_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I3_rd_group && rs3_index == I3_rd_index);
+
+    wire conflict = rs1_conflict_I1 | rs1_conflict_I2 | rs1_conflict_I3 | rs2_conflict_I1 | rs2_conflict_I2 | rs2_conflict_I3 | rs3_conflict_I1 | rs3_conflict_I2 | rs3_conflict_I3;
     assign ready = (EX_ready | !valid) & !conflict;
     always @(posedge clk) valid <= !rst & ready & IF_valid;
 endmodule
@@ -71,11 +81,11 @@ module IDU (
     assign funct3Y = inst[27:25];
     assign funct2R4 = inst[26:25];
     // 不同的立即数
-    assign immI = {{12{inst[31]}}, inst[31:20]};
+    assign immI = {{20{inst[31]}}, inst[31:20]};
     assign immU = {inst[31:12], 12'b0};
     assign immS = {{20{inst[31]}}, inst[31:25], inst[11:7]};
-    assign immJ = {{11{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
-    assign immB = {{19{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
+    assign immJ = {{12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0};
+    assign immB = {{20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0};
     // Y型指令的立即数
     assign matI = inst[31:30];
     assign matJ = inst[29:28];
@@ -90,13 +100,25 @@ module IDU (
             // RV32I
             7'b0110111, 7'b0010111:  //lui,auipc
             begin
-                rd_group = `REG_GROUP_R;
-                rd_index = inst[11:7];
+                rd_group  = `REG_GROUP_R;
+                rd_index  = inst[11:7];
+                rs1_group = `REG_GROUP_INVALID;
+                rs1_index = `zero5;
+                rs2_group = `REG_GROUP_INVALID;
+                rs2_index = `zero5;
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             7'b1101111,7'b0000011,7'b0010011:  //jal,load,imm
             begin
-                rd_group = `REG_GROUP_R;
-                rd_index = inst[11:7];
+                rd_group  = `REG_GROUP_R;
+                rd_index  = inst[11:7];
+                rs1_group = `REG_GROUP_INVALID;
+                rs1_index = `zero5;
+                rs2_group = `REG_GROUP_INVALID;
+                rs2_index = `zero5;
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             7'b1100111:  //jalr
             begin
@@ -104,20 +126,32 @@ module IDU (
                 rd_index  = inst[11:7];
                 rs1_group = `REG_GROUP_R;
                 rs1_index = inst[19:15];
+                rs2_group = `REG_GROUP_INVALID;
+                rs2_index = `zero5;
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             7'b1100011:  //branch
             begin
+                rd_group  = `REG_GROUP_INVALID;
+                rd_index  = `zero5;
                 rs1_group = `REG_GROUP_R;
                 rs1_index = inst[19:15];
                 rs2_group = `REG_GROUP_R;
                 rs2_index = inst[24:20];
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             7'b0100011:  //store
             begin
+                rd_group  = `REG_GROUP_INVALID;
+                rd_index  = `zero5;
                 rs1_group = `REG_GROUP_R;
                 rs1_index = inst[19:15];
                 rs2_group = `REG_GROUP_R;
                 rs2_index = inst[24:20];
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             7'b0110011:  //R
             begin
@@ -127,6 +161,8 @@ module IDU (
                 rs1_index = inst[19:15];
                 rs2_group = `REG_GROUP_R;
                 rs2_index = inst[24:20];
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
             end
             default: begin
                 rd_group  = `REG_GROUP_INVALID;
@@ -154,12 +190,12 @@ module Inst1 (
     // 寄存器字段
     input [1:0] _rd_group,
     input [4:0] _rd_index,
-    input [1:0] _rs1_group,
-    input [4:0] _rs1_index,
-    input [1:0] _rs2_group,
-    input [4:0] _rs2_index,
-    input [1:0] _rs3_group,
-    input [4:0] _rs3_index,
+    // input [1:0] _rs1_group,
+    // input [4:0] _rs1_index,
+    // input [1:0] _rs2_group,
+    // input [4:0] _rs2_index,
+    // input [1:0] _rs3_group,
+    // input [4:0] _rs3_index,
     // pc操作
     input _pc_opt,
     // 功能码
@@ -171,12 +207,12 @@ module Inst1 (
     // 寄存器相关字段
     output reg [1:0] rd_group,
     output reg [4:0] rd_index,
-    output reg [1:0] rs1_group,
-    output reg [4:0] rs1_index,
-    output reg [1:0] rs2_group,
-    output reg [4:0] rs2_index,
-    output reg [1:0] rs3_group,
-    output reg [4:0] rs3_index,
+    // output reg [1:0] rs1_group,
+    // output reg [4:0] rs1_index,
+    // output reg [1:0] rs2_group,
+    // output reg [4:0] rs2_index,
+    // output reg [1:0] rs3_group,
+    // output reg [4:0] rs3_index,
     // pc操作
     output reg pc_opt
 );
@@ -190,12 +226,12 @@ module Inst1 (
             //
             rd_group  <= _rd_group;
             rd_index  <= _rd_index;
-            rs1_group <= _rs1_group;
-            rs1_index <= _rs1_index;
-            rs2_group <= _rs2_group;
-            rs2_index <= _rs2_index;
-            rs3_group <= _rs3_group;
-            rs3_index <= _rs3_index;
+            // rs1_group <= _rs1_group;
+            // rs1_index <= _rs1_index;
+            // rs2_group <= _rs2_group;
+            // rs2_index <= _rs2_index;
+            // rs3_group <= _rs3_group;
+            // rs3_index <= _rs3_index;
             //
             pc_opt    <= _pc_opt;
         end
@@ -213,6 +249,16 @@ module Srcs (
     input [31:0] _immI,
     input [1:0] _matI,
     input [1:0] _matJ,
+    // 从寄存器堆接受的数据
+    input [31:0] _src1R,
+    input [31:0] _src2R,
+    input [31:0] _src3R,
+    input [31:0] _src1F,
+    input [31:0] _src2F,
+    input [31:0] _src3F,
+    input [511:0] _src1M,
+    input [511:0] _src2M,
+    input [511:0] _src3M,
     // 发送给ALU的数据
     output reg [31:0] immU,
     output reg [31:0] immJ,
@@ -220,25 +266,35 @@ module Srcs (
     output reg [31:0] immS,
     output reg [31:0] immI,
     output reg [1:0] matI,
-    output reg [1:0] matJ
+    output reg [1:0] matJ,
+    output reg [31:0] src1R,
+    output reg [31:0] src2R,
+    output reg [31:0] src3R,
+    output reg [31:0] src1F,
+    output reg [31:0] src2F,
+    output reg [31:0] src3F,
+    output reg [511:0] src1M,
+    output reg [511:0] src2M,
+    output reg [511:0] src3M
 );
     always @(posedge clk) begin
-        if (rst) begin
-            immU <= 0;
-            immJ <= 0;
-            immB <= 0;
-            immS <= 0;
-            immI <= 0;
-            matI <= 0;
-            matJ <= 0;
-        end else if (ready) begin
-            immU <= _immU;
-            immJ <= _immJ;
-            immB <= _immB;
-            immS <= _immS;
-            immI <= _immI;
-            matI <= _matI;
-            matJ <= _matJ;
+        if (ready) begin
+            immU  <= _immU;
+            immJ  <= _immJ;
+            immB  <= _immB;
+            immS  <= _immS;
+            immI  <= _immI;
+            matI  <= _matI;
+            matJ  <= _matJ;
+            src1R <= _src1R;
+            src2R <= _src2R;
+            src3R <= _src3R;
+            src1F <= _src1F;
+            src2F <= _src2F;
+            src3F <= _src3F;
+            src1M <= _src1M;
+            src2M <= _src2M;
+            src3M <= _src3M;
         end
     end
 endmodule
@@ -247,12 +303,12 @@ module PC2 (
     input clk,
     input ready,
     //
-    input [31:0] PC1_pc,
-    output reg [31:0] pc
+    input [31:0] PC1_snpc,
+    output reg [31:0] snpc
 );
     always @(posedge clk) begin
         if (ready) begin
-            pc <= PC1_pc;
+            snpc <= PC1_snpc;
         end
     end
 endmodule

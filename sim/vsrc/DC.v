@@ -94,10 +94,11 @@ module Data_Cache (
                             mwvalid     <= 1;
                             mbready     <= 1;
                         end
+                        default:  /*do nothing*/;
                     endcase
                 end
                 `STATE_R_WORD: begin
-                    if (rvalid) begin
+                    if (mrvalid) begin
                         case (funct3)
                             //lb
                             3'b000:  cache[0][0] <= {{24{mrdata[7]}}, mrdata[7:0]};
@@ -128,7 +129,7 @@ module Data_Cache (
                 end
 
                 `STATE_R_DIAGONAL_0:
-                if (rvalid) begin
+                if (mrvalid) begin
                     cache[0][0] <= mrdata;
                     cache[0][1] <= `fzero;
                     cache[0][2] <= `fzero;
@@ -137,7 +138,7 @@ module Data_Cache (
                     addr        <= addr + 4;
                 end
                 `STATE_R_DIAGONAL_1:
-                if (rvalid) begin
+                if (mrvalid) begin
                     cache[1][0] <= `fzero;
                     cache[1][1] <= mrdata;
                     cache[1][2] <= `fzero;
@@ -146,7 +147,7 @@ module Data_Cache (
                     addr        <= addr + 4;
                 end
                 `STATE_R_DIAGONAL_2:
-                if (rvalid) begin
+                if (mrvalid) begin
                     cache[2][0] <= `fzero;
                     cache[2][1] <= `fzero;
                     cache[2][2] <= mrdata;
@@ -155,7 +156,7 @@ module Data_Cache (
                     addr        <= addr + 4;
                 end
                 `STATE_R_DIAGONAL_3:
-                if (rvalid) begin
+                if (mrvalid) begin
                     cache[3][0]   <= `fzero;
                     cache[3][1]   <= `fzero;
                     cache[3][2]   <= `fzero;
@@ -163,7 +164,6 @@ module Data_Cache (
                     state         <= `STATE_FINISH;
                     rdata_M_valid <= 1;
                     marvalid      <= 0;
-                    mrvalid       <= 0;
                 end
 
                 //TODO
@@ -175,7 +175,7 @@ module Data_Cache (
                     rdata_F_valid <= 0;
                     rdata_M_valid <= 0;
                 end
-
+                default:  /*do nothing*/;
             endcase
         end
     end

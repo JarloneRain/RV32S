@@ -8,5 +8,6 @@ build/
 RV32S.sln
 cst/
 sim/yosys/*
+wave.vcd
 !sim/yosys/script.ys
 !.gitignore

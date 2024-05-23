@@ -15,7 +15,7 @@ module ALU (
     input [1:0] matI,
     input [1:0] matJ,
     // 计算参数
-    input [31:0] pc,
+    input [31:0] snpc,
     input [31:0] src1R,
     input [31:0] src2R,
     input [31:0] src3R,
@@ -31,23 +31,33 @@ module ALU (
     output reg [31:0] res_F,
     output reg [511:0] res_M
 );
-    wire [31:0] snpc;
-    assign snpc = pc + 4;
+    wire [31:0] pc = snpc - 4;
     always @(*) begin
         case (opcode)
             // RV32I
             7'b0110111: begin  // lui
+                npc   = snpc;
                 res_R = immU;
+                res_F = 0;
+                res_M = 0;
             end
             7'b0010111: begin  // auipc
+                npc   = snpc;
                 res_R = pc + immU;
+                res_F = 0;
+                res_M = 0;
             end
             7'b1101111: begin  // jal
-                res_R = pc + 4;
+                npc   = pc + immJ;
+                res_R = snpc;
+                res_F = 0;
+                res_M = 0;
             end
             7'b1100111: begin  // jalr
-                res_R = pc + 4;
-                npc   = pc + immJ;
+                npc   = immI + src1R;
+                res_R = snpc;
+                res_F = 0;
+                res_M = 0;
             end
             7'b1100011: begin  // branch
                 case (funct3)
@@ -69,15 +79,26 @@ module ALU (
                     3'b111: begin  // bgeu
                         npc = src1R >= src2R ? pc + immB : snpc;
                     end
+                    default:  /*do nothing*/;
                 endcase
+                res_R = 0;
+                res_F = 0;
+                res_M = 0;
             end
             7'b0000011: begin  // load
+                npc   = snpc;
                 res_R = src1R + immI;
+                res_F = 0;
+                res_M = 0;
             end
             7'b0100011: begin  // store
+                npc   = snpc;
                 res_R = src1R + immS;
+                res_F = 0;
+                res_M = 0;
             end
             7'b0010011: begin  // imm
+                npc = snpc;
                 case (funct3)
                     3'b000: begin  // addi
                         res_R = src1R + immI;
@@ -101,74 +122,88 @@ module ALU (
                         res_R = src1R << immI[4:0];
                     end
                     3'b101: begin  // srli/srai
-                        case (funct7[5])
-                            1'b0: begin  // srli
-                                res_R = src1R >> immI[4:0];
-                            end
-                            1'b1: begin  // srai
-                                res_R = $signed(src1R) >>> immI[4:0];
-                            end
+                        case (funct7)
+                            // srli
+                            7'b0000000: res_R = src1R >> immI[4:0];
+                            // srai
+                            7'b0100000: res_R = $signed(src1R) >>> immI[4:0];
+                            default: res_R = 0;
                         endcase
                     end
                 endcase
+                res_F = 0;
+                res_M = 0;
             end
             7'b0110011: begin  // reg
+                npc = snpc;
                 case (funct3)
                     3'b000: begin  // add/sub
                         case (funct7)
-                            7'b0000000: begin  // add
-                                res_R = src1R + src2R;
-                            end
-                            7'b0100000: begin  // sub
-                                res_R = src1R - src2R;
-                            end
+                            // add
+                            7'b0000000: res_R = src1R + src2R;
+                            // sub
+                            7'b0100000: res_R = src1R - src2R;
+                            default: res_R = 0;
                         endcase
                     end
-                    3'b001: begin  // sll
-                        res_R = src1R << src2R[4:0];
-                    end
-                    3'b010: begin  // slt
-                        res_R = $signed(src1R) < $signed(src2R) ? 1 : 0;
-                    end
-                    3'b011: begin  // sltu
-                        res_R = src1R < src2R ? 1 : 0;
-                    end
-                    3'b100: begin  // xor
-                        res_R = src1R ^ src2R;
-                    end
-                    3'b101: begin  // srl/sra
-                        case (funct7[5])
-                            1'b0: begin  // srl
-                                res_R = src1R >> src2R[4:0];
-                            end
-                            1'b1: begin  // sra
-                                res_R = $signed(src1R) >>> src2R[4:0];
-                            end
+                    // sll
+                    3'b001:  res_R = src1R << src2R[4:0];
+                    // slt
+                    3'b010:  res_R = $signed(src1R) < $signed(src2R) ? 1 : 0;
+                    // sltu
+                    3'b011:  res_R = src1R < src2R ? 1 : 0;
+                    // xor
+                    3'b100:  res_R = src1R ^ src2R;
+                    // srl/sra
+                    3'b101: begin
+                        case (funct7)
+                            // srl
+                            7'b0000000: res_R = src1R >> src2R[4:0];
+                            // sra
+                            7'b0100000: res_R = $signed(src1R) >>> src2R[4:0];
+                            default: res_R = 0;
                         endcase
                     end
-                    3'b110: begin  // or
-                        res_R = src1R | src2R;
-                    end
-                    3'b111: begin  // and
-                        res_R = src1R & src2R;
-                    end
+                    // or
+                    3'b110:  res_R = src1R | src2R;
+                    // and
+                    3'b111:  res_R = src1R & src2R;
+                    default: res_R = 0;
                 endcase
+                res_F = 0;
+                res_M = 0;
             end
             7'b0001111: begin  // fence
-                // do nothing
+                npc   = snpc;
+                res_R = 0;
+                res_F = 0;
+                res_M = 0;
             end
             7'b1110011: begin  // ecall/ebreak
-                // do nothing
+                npc   = snpc;
+                res_R = 0;
+                res_F = 0;
+                res_M = 0;
             end
             // RV32F
             7'b0000111: begin  // flw
+                npc   = snpc;
                 res_R = src1R + immI;
+                res_F = 0;
+                res_M = 0;
             end
             7'b0100111: begin  // fsw
+                npc   = snpc;
                 res_R = src1R + immS;
+                res_F = 0;
+                res_M = 0;
             end
-
-
+            default: begin
+                npc   = snpc;
+                res_R = 0;
+                res_F = 0;
+                res_M = 0;
+            end
         endcase
     end
 endmodule

@@ -13,8 +13,7 @@ module ME_CTRL (
 
     assign ready = (WB_ready | !valid) & (Data_Cache_state == `STATE_FREE);
     // 别忘记数据缓存的逻辑
-    always @(posedge clk) valid <= !rst & ready & EX_CTRL_valid;
-
+    always @(posedge clk) valid <= !rst & ready & EX_valid;
 endmodule
 
 

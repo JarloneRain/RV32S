@@ -17,13 +17,12 @@ module IF_CTRL (
     input I3_valid,
     input I3_pc_opt
 );
-    assign ready = (ID_ready| !valid) & !ID_pc_opt
+    assign ready = (ID_ready| !valid) 
+                    & !(valid&!ID_pc_opt) 
                     & !(I1_valid & I1_pc_opt)
                     & !(I2_valid & I2_pc_opt)
                     & !(I3_valid & I3_pc_opt);
-    always @(posedge clk) begin
-        valid <= !rst | ready & AR_valid;
-    end
+    always @(posedge clk) valid <= !rst & ready & AR_valid;
 endmodule
 
 module IFU (
@@ -44,12 +43,12 @@ module PC1 (
     input clk,
     input ready,
     //
-    input [31:0] PC_pc,
-    output reg [31:0] pc
+    input [31:0] PC_snpc,
+    output reg [31:0] snpc
 );
     always @(posedge clk) begin
         if (ready) begin
-            pc <= PC_pc;
+            snpc <= PC_snpc;
         end
     end
 endmodule

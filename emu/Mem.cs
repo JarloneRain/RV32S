@@ -13,7 +13,7 @@ class Memory
         //auipc
         memory[3] = 0x00; memory[2] = 0x00; memory[1] = 0x05; memory[0] = 0x37;
         //ebreak
-        memory[6] = 0x00; memory[6] = 0x10; memory[5] = 0x00; memory[4] = 0x73;
+        memory[7] = 0x00; memory[6] = 0x10; memory[5] = 0x00; memory[4] = 0x73;
     }
 
     public void Print(uint addr, uint words)

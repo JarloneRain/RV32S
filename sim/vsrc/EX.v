@@ -10,9 +10,7 @@ module EX_CTRL (
     input ME_ready
 );
     assign ready = ME_ready | !valid;
-    always @(posedge clk) begin
-        valid <= !rst & ready & ID_valid;
-    end
+    always @(posedge clk) valid <= !rst & ready & ID_valid;
 endmodule
 
 module Inst2 (

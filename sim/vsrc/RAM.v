@@ -74,11 +74,11 @@ module RAM (
                 _araddr  <= araddr;
                 rvalid   <= 0;
             end else if (_arvalid) begin  // 读取地址可用，读取数据
-                rdata  <= mem_read(_araddr);
-                rvalid <= 1;
-            end else if (rready & rvalid) begin  // 数据已被读走
-                rvalid   <= 0;
+                rdata    <= mem_read(_araddr);
+                rvalid   <= 1;
                 _arvalid <= 0;
+            end else if (rready & rvalid) begin  // 数据已被读走
+                rvalid <= 0;
             end
             // 写入
             if (awready & wready) begin

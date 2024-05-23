@@ -1,5 +1,3 @@
-
-
 module CPU (
     input clk,
     input rst,
@@ -25,7 +23,6 @@ module CPU (
     input AXI_bvalid,
     output AXI_bready
 );
-
     // IF
     //  IF_CTRL
     wire IF_CTRL_valid;
@@ -33,25 +30,25 @@ module CPU (
     //  IFU
     wire [31:0] IFU_inst;
     //  PC1
-    wire [31:0] PC1_pc;
+    wire [31:0] PC1_snpc;
     // ID
     //  ID_CTRL
     wire ID_CTRL_valid;
     wire ID_CTRL_ready;
     //  IDU
-    wire [31:0] IDU_opcode;
-    wire [31:0] IDU_funct7;
-    wire [31:0] IDU_funct3;
-    wire [31:0] IDU_funct3Y;
-    wire [31:0] IDU_funct2R4;
-    wire [31:0] IDU_rd_group;
-    wire [31:0] IDU_rd_index;
-    wire [31:0] IDU_rs1_group;
-    wire [31:0] IDU_rs1_index;
-    wire [31:0] IDU_rs2_group;
-    wire [31:0] IDU_rs2_index;
-    wire [31:0] IDU_rs3_group;
-    wire [31:0] IDU_rs3_index;
+    wire [6:0] IDU_opcode;
+    wire [6:0] IDU_funct7;
+    wire [2:0] IDU_funct3;
+    wire [2:0] IDU_funct3Y;
+    wire [1:0] IDU_funct2R4;
+    wire [1:0] IDU_rd_group;
+    wire [4:0] IDU_rd_index;
+    wire [1:0] IDU_rs1_group;
+    wire [4:0] IDU_rs1_index;
+    wire [1:0] IDU_rs2_group;
+    wire [4:0] IDU_rs2_index;
+    wire [1:0] IDU_rs3_group;
+    wire [4:0] IDU_rs3_index;
     wire [31:0] IDU_immU;
     wire [31:0] IDU_immJ;
     wire [31:0] IDU_immB;
@@ -61,19 +58,19 @@ module CPU (
     wire [1:0] IDU_matJ;
     wire IDU_pc_opt;
     //  Inst1
-    wire [31:0] Inst1_opcode;
-    wire [31:0] Inst1_funct7;
-    wire [31:0] Inst1_funct3;
-    wire [31:0] Inst1_funct3Y;
-    wire [31:0] Inst1_funct2R4;
-    wire [31:0] Inst1_rd_group;
-    wire [31:0] Inst1_rd_index;
-    wire [31:0] Inst1_rs1_group;
-    wire [31:0] Inst1_rs1_index;
-    wire [31:0] Inst1_rs2_group;
-    wire [31:0] Inst1_rs2_index;
-    wire [31:0] Inst1_rs3_group;
-    wire [31:0] Inst1_rs3_index;
+    wire [6:0] Inst1_opcode;
+    wire [6:0] Inst1_funct7;
+    wire [2:0] Inst1_funct3;
+    wire [2:0] Inst1_funct3Y;
+    wire [1:0] Inst1_funct2R4;
+    wire [1:0] Inst1_rd_group;
+    wire [4:0] Inst1_rd_index;
+    wire [1:0] Inst1_rs1_group;
+    wire [4:0] Inst1_rs1_index;
+    wire [1:0] Inst1_rs2_group;
+    wire [4:0] Inst1_rs2_index;
+    wire [1:0] Inst1_rs3_group;
+    wire [4:0] Inst1_rs3_index;
     wire Inst1_pc_opt;
     //  Srcs
     wire [31:0] Srcs_immU;
@@ -83,8 +80,17 @@ module CPU (
     wire [31:0] Srcs_immI;
     wire [1:0] Srcs_matI;
     wire [1:0] Srcs_matJ;
+    wire [31:0] Srcs_src1R;
+    wire [31:0] Srcs_src2R;
+    wire [31:0] Srcs_src3R;
+    wire [31:0] Srcs_src1F;
+    wire [31:0] Srcs_src2F;
+    wire [31:0] Srcs_src3F;
+    wire [511:0] Srcs_src1M;
+    wire [511:0] Srcs_src2M;
+    wire [511:0] Srcs_src3M;
     //  PC2
-    wire [31:0] PC2_pc;
+    wire [31:0] PC2_snpc;
     // EX
     //  EX_CTRL
     wire EX_CTRL_valid;
@@ -185,7 +191,7 @@ module CPU (
     wire AR_m_rready;
     wire [31:0] AR_m_awaddr;
     wire AR_m_awvalid;
-    wire AR_m_wdata;
+    wire [31:0] AR_m_wdata;
     wire [3:0] AR_m_wstrb;
     wire AR_m_wvalid;
     wire AR_m_bready;
@@ -198,11 +204,11 @@ module CPU (
         .AR_valid(AR_irvalid),
         .ID_ready(ID_CTRL_ready),
         .ID_pc_opt(IDU_pc_opt),
-        .I1_valid(ID_CTRL_valid_valid),
+        .I1_valid(ID_CTRL_valid),
         .I1_pc_opt(Inst1_pc_opt),
-        .I2_valid(EX_CTRL_valid_valid),
+        .I2_valid(EX_CTRL_valid),
         .I2_pc_opt(Inst2_pc_opt),
-        .I3_valid(ME_CTRL_valid_valid),
+        .I3_valid(ME_CTRL_valid),
         .I3_pc_opt(Inst3_pc_opt)
     );
 
@@ -216,8 +222,8 @@ module CPU (
     PC1 _PC1 (
         .clk(clk),
         .ready(IF_CTRL_ready),
-        .PC_pc(PC_pc),
-        .pc(PC1_pc)
+        .PC_snpc(PC_pc),
+        .snpc(PC1_snpc)
     );
 
     ID_CTRL _ID_CTRL (
@@ -233,8 +239,13 @@ module CPU (
         .rs2_index(IDU_rs2_index),
         .rs3_group(IDU_rs3_group),
         .rs3_index(IDU_rs3_index),
+        .I1_valid(ID_CTRL_valid),
+        .I1_rd_group(Inst1_rd_group),
+        .I1_rd_index(Inst1_rd_index),
+        .I2_valid(EX_CTRL_valid),
         .I2_rd_group(Inst2_rd_group),
         .I2_rd_index(Inst2_rd_index),
+        .I3_valid(ME_CTRL_valid),
         .I3_rd_group(Inst3_rd_group),
         .I3_rd_index(Inst3_rd_index)
     );
@@ -274,12 +285,12 @@ module CPU (
         ._funct2R4(IDU_funct2R4),
         ._rd_group(IDU_rd_group),
         ._rd_index(IDU_rd_index),
-        ._rs1_group(IDU_rs1_group),
-        ._rs1_index(IDU_rs1_index),
-        ._rs2_group(IDU_rs2_group),
-        ._rs2_index(IDU_rs2_index),
-        ._rs3_group(IDU_rs3_group),
-        ._rs3_index(IDU_rs3_index),
+        // ._rs1_group(IDU_rs1_group),
+        // ._rs1_index(IDU_rs1_index),
+        // ._rs2_group(IDU_rs2_group),
+        // ._rs2_index(IDU_rs2_index),
+        // ._rs3_group(IDU_rs3_group),
+        // ._rs3_index(IDU_rs3_index),
         ._pc_opt(IDU_pc_opt),
         .opcode(Inst1_opcode),
         .funct7(Inst1_funct7),
@@ -288,17 +299,17 @@ module CPU (
         .funct2R4(Inst1_funct2R4),
         .rd_group(Inst1_rd_group),
         .rd_index(Inst1_rd_index),
-        .rs1_group(Inst1_rs1_group),
-        .rs1_index(Inst1_rs1_index),
-        .rs2_group(Inst1_rs2_group),
-        .rs2_index(Inst1_rs2_index),
-        .rs3_group(Inst1_rs3_group),
-        .rs3_index(Inst1_rs3_index),
+        // .rs1_group(Inst1_rs1_group),
+        // .rs1_index(Inst1_rs1_index),
+        // .rs2_group(Inst1_rs2_group),
+        // .rs2_index(Inst1_rs2_index),
+        // .rs3_group(Inst1_rs3_group),
+        // .rs3_index(Inst1_rs3_index),
         .pc_opt(Inst1_pc_opt)
     );
 
     Srcs _Srcs (
-        .clk  (clk),
+        .clk(clk),
         .ready(ID_CTRL_ready),
         ._immU(IDU_immU),
         ._immJ(IDU_immJ),
@@ -307,20 +318,38 @@ module CPU (
         ._immI(IDU_immI),
         ._matI(IDU_matI),
         ._matJ(IDU_matJ),
-        .immU (Srcs_immU),
-        .immJ (Srcs_immJ),
-        .immB (Srcs_immB),
-        .immS (Srcs_immS),
-        .immI (Srcs_immI),
-        .matI (Srcs_matI),
-        .matJ (Srcs_matJ)
+        ._src1R(Gpr_dout_R_rs1),
+        ._src2R(Gpr_dout_R_rs2),
+        ._src3R(Gpr_dout_R_rs3),
+        ._src1F(Gpr_dout_F_rs1),
+        ._src2F(Gpr_dout_F_rs2),
+        ._src3F(Gpr_dout_F_rs3),
+        ._src1M(Gpr_dout_M_rs1),
+        ._src2M(Gpr_dout_M_rs2),
+        ._src3M(Gpr_dout_M_rs3),
+        .immU(Srcs_immU),
+        .immJ(Srcs_immJ),
+        .immB(Srcs_immB),
+        .immS(Srcs_immS),
+        .immI(Srcs_immI),
+        .matI(Srcs_matI),
+        .matJ(Srcs_matJ),
+        .src1R(Srcs_src1R),
+        .src2R(Srcs_src2R),
+        .src3R(Srcs_src3R),
+        .src1F(Srcs_src1F),
+        .src2F(Srcs_src2F),
+        .src3F(Srcs_src3F),
+        .src1M(Srcs_src1M),
+        .src2M(Srcs_src2M),
+        .src3M(Srcs_src3M)
     );
 
     PC2 _PC2 (
         .clk(clk),
         .ready(ID_CTRL_ready),
-        .PC1_pc(PC_pc),
-        .pc(PC2_pc)
+        .PC1_snpc(PC1_snpc),
+        .snpc(PC2_snpc)
     );
 
     EX_CTRL _EX_CTRL (
@@ -354,7 +383,6 @@ module CPU (
     );
 
     ALU _ALU (
-        .npc  (PC2_pc),
         .opcode(Inst1_opcode),
         .funct7(Inst1_funct7),
         .funct3(Inst1_funct3),
@@ -367,16 +395,16 @@ module CPU (
         .immI (Srcs_immI),
         .matI (Srcs_matI),
         .matJ (Srcs_matJ),
-        .pc   (PC2_pc),
-        .src1R(Gpr_dout_R_rs1),
-        .src1F(Gpr_dout_F_rs1),
-        .src1M(Gpr_dout_M_rs1),
-        .src2R(Gpr_dout_R_rs2),
-        .src2F(Gpr_dout_F_rs2),
-        .src2M(Gpr_dout_M_rs2),
-        .src3R(Gpr_dout_R_rs3),
-        .src3F(Gpr_dout_F_rs3),
-        .src3M(Gpr_dout_M_rs3),
+        .snpc   (PC2_snpc),
+        .src1R(Srcs_src1R),
+        .src2R(Srcs_src2R),
+        .src3R(Srcs_src3R),
+        .src1F(Srcs_src1F),
+        .src2F(Srcs_src2F),
+        .src3F(Srcs_src3F),
+        .src1M(Srcs_src1M),
+        .src2M(Srcs_src2M),
+        .src3M(Srcs_src3M),
         .npc  (ALU_npc),
         .res_R(ALU_res_R),
         .res_F(ALU_res_F),
@@ -520,18 +548,18 @@ module CPU (
         .din_R(GprMux_R),
         .din_F(GprMux_F),
         .din_M(GprMux_M),
-        .rs1_group(Inst1_rs1_group),
-        .rs1_index(Inst1_rs1_index),
+        .rs1_group(IDU_rs1_group),
+        .rs1_index(IDU_rs1_index),
         .dout_R_rs1(Gpr_dout_R_rs1),
         .dout_F_rs1(Gpr_dout_F_rs1),
         .dout_M_rs1(Gpr_dout_M_rs1),
-        .rs2_group(Inst1_rs2_group),
-        .rs2_index(Inst1_rs2_index),
+        .rs2_group(IDU_rs2_group),
+        .rs2_index(IDU_rs2_index),
         .dout_R_rs2(Gpr_dout_R_rs2),
         .dout_F_rs2(Gpr_dout_F_rs2),
         .dout_M_rs2(Gpr_dout_M_rs2),
-        .rs3_group(Inst1_rs3_group),
-        .rs3_index(Inst1_rs3_index),
+        .rs3_group(IDU_rs3_group),
+        .rs3_index(IDU_rs3_index),
         .dout_R_rs3(Gpr_dout_R_rs3),
         .dout_F_rs3(Gpr_dout_F_rs3),
         .dout_M_rs3(Gpr_dout_M_rs3)
@@ -542,6 +570,7 @@ module CPU (
     PC _PC (
         .clk(clk),
         .rst(rst),
+        .ME_valid(ME_CTRL_valid),
         .AR_ready(AR_pcrready),
         .IF_ready(IF_CTRL_ready),
         .valid(PC_valid),
@@ -561,6 +590,8 @@ module CPU (
         .rvalid(AR_rvalid),
         .inst(AR_inst),
         .irvalid(AR_irvalid),
+        .rready(DC_mrready),
+        .irready(IF_CTRL_ready),
         .awaddr(DC_mawaddr),
         .awvalid(DC_mawvalid),
         .awready(AR_awready),
@@ -568,9 +599,9 @@ module CPU (
         .wstrb(DC_mwstrb),
         .wvalid(DC_mwvalid),
         .wready(AR_wready),
-        .bresp(DC_mbresp),
-        .bvalid(DC_mbvalid),
-        .bready(AXI_bready),
+        .bresp(AR_bresp),
+        .bvalid(AR_bvalid),
+        .bready(DC_mbready),
         .m_araddr(AR_m_araddr),
         .m_arvalid(AR_m_arvalid),
         .m_arready(AXI_arready),
@@ -598,5 +629,82 @@ module CPU (
     assign AXI_wstrb   = AR_m_wstrb;
     assign AXI_wvalid  = AR_m_wvalid;
     assign AXI_bready  = AR_m_bready;
+
+    integer t = 0;
+    always @(posedge clk) begin
+        $display("t=%d rst=%d", t, rst);
+        t = t + 1;
+        $display("\tIF valid=%d  ready=%d", IF_CTRL_valid, IF_CTRL_ready);
+        //if (IF_CTRL_valid) begin
+            $display("\t\tIFU inst=%h", IFU_inst);
+            $display("\t\tPC1 snpc=%h", PC1_snpc);
+            $display("\t\tIDU opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
+                     IDU_opcode, IDU_funct7, IDU_funct3, IDU_funct3Y, IDU_funct2R4);
+            $display(
+                "\t\tIDU rd_group=%h  rd_index=%h  rs1_group=%h  rs1_index=%h  rs2_group=%h  rs2_index=%h  rs3_group=%h  rs3_index=%h",
+                IDU_rd_group, IDU_rd_index, IDU_rs1_group, IDU_rs1_index, IDU_rs2_group,
+                IDU_rs2_index, IDU_rs3_group, IDU_rs3_index);
+            $display("\t\tIDU immU=%h  immJ=%h  immB=%h  immS=%h  immI=%h  matI=%h  matJ=%h",
+                     IDU_immU, IDU_immJ, IDU_immB, IDU_immS, IDU_immI, IDU_matI, IDU_matJ);
+            $display("\t\tIDU pc_opt=%d", IDU_pc_opt);
+        //end
+        $display("\tID valid=%d  ready=%d", ID_CTRL_valid, ID_CTRL_ready);
+        //if (ID_CTRL_valid) begin
+            $display("\t\tInst1 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
+                     Inst1_opcode, Inst1_funct7, Inst1_funct3, Inst1_funct3Y, Inst1_funct2R4);
+            $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst1_rd_group, Inst1_rd_index,
+                     Inst1_pc_opt);
+            $display("\t\tSrcs immU=%h  immJ=%h  immB=%h  immS=%h  immI=%h  matI=%h  matJ=%h",
+                     Srcs_immU, Srcs_immJ, Srcs_immB, Srcs_immS, Srcs_immI, Srcs_matI, Srcs_matJ);
+            $display("\t\t     scr1R=%h  scr2R=%h  scr3R=%h  scr1F=%h  scr2F=%h  scr3F=%h",
+                     Srcs_src1R, Srcs_src2R, Srcs_src3R, Srcs_src1F, Srcs_src2F, Srcs_src3F);
+            $display("\t\tPC2 snpc=%h", PC2_snpc);
+            $display("\t\tALU npc=%h  res_R=%h  res_F=%h  res_M=%h", ALU_npc, ALU_res_R, ALU_res_F,
+                     ALU_res_M);
+        // end
+        $display("\tEX valid=%d  ready=%d", EX_CTRL_valid, EX_CTRL_ready);
+        //if (EX_CTRL_valid) begin
+            $display("\t\tInst2 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
+                     Inst2_opcode, Inst2_funct7, Inst2_funct3, Inst2_funct3Y, Inst2_funct2R4);
+            $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst2_rd_group, Inst2_rd_index,
+                     Inst3_pc_opt);
+            $display(
+                "\t\tALU_OUT1 npc=%h  res_R=%h  res_F=%h  res_M=%h  rs2_R=%h  rs2_F=%h  rs2_M=%h",
+                ALU_OUT1_npc, ALU_OUT1_res_R, ALU_OUT1_res_F, ALU_OUT1_res_M, ALU_OUT1_rs2_R,
+                ALU_OUT1_rs2_F, ALU_OUT1_rs2_M);
+        //end
+        $display(
+            "\tData_Cache state=%h  rdata_R_valid=%d  rdata_R=%h  rdata_F_valid=%d  rdata_F=%h  rdata_M_valid=%d  rdata_M=%h",
+            DC_state, DC_rdata_R_valid, DC_rdata_R, DC_rdata_F_valid, DC_rdata_F, DC_rdata_M_valid,
+            DC_rdata_M);
+        $display(
+            "\tData_Cache maraddr=%h  marvalid=%d  mrready=%d  mawaddr=%h  mawvalid=%d  mwdata=%h  mwstrb=%h  mwvalid=%d  mbready=%d",
+            DC_maraddr, DC_marvalid, DC_mrready, DC_mawaddr, DC_mawvalid, DC_mwdata, DC_mwstrb,
+            DC_mwvalid, DC_mbready);
+        $display("\tME valid=%d  ready=%d", ME_CTRL_valid, ME_CTRL_ready);
+        //if (ME_CTRL_valid) begin
+            $display("\t\tInst3 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
+                     Inst3_opcode, Inst3_funct7, Inst3_funct3, Inst3_funct3Y, Inst3_funct2R4);
+            $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst3_rd_group, Inst3_rd_index,
+                     Inst3_pc_opt);
+            $display("\t\tALU_OUT2 npc=%h  res_R=%h  res_F=%h  res_M=%h", ALU_OUT2_npc,
+                     ALU_OUT2_res_R, ALU_OUT2_res_F, ALU_OUT2_res_M);
+            $display("\t\tGprMux we=%d  R=%h  F=%h  M=%h", GprMux_we, GprMux_R, GprMux_F, GprMux_M);
+        //end
+        $display("\tWB valid=%d  ready=%d", WB_CTRL_valid, WB_CTRL_ready);
+        $display(
+            "\t\tGpr dout_R_rs1=%h  dout_F_rs1=%h  dout_M_rs1=%h  dout_R_rs2=%h  dout_F_rs2=%h  dout_M_rs2=%h  dout_R_rs3=%h  dout_F_rs3=%h  dout_M_rs3=%h",
+            Gpr_dout_R_rs1, Gpr_dout_F_rs1, Gpr_dout_M_rs1, Gpr_dout_R_rs2, Gpr_dout_F_rs2,
+            Gpr_dout_M_rs2, Gpr_dout_R_rs3, Gpr_dout_F_rs3, Gpr_dout_M_rs3);
+        $display("\t\tPC valid=%d  pc=%h", PC_valid, PC_pc);
+        $display(
+            "\tAR pcrready=%d  arready=%d  rdata=%h  rvalid=%d  inst=%h  irvalid=%d  awready=%d  wready=%d  bresp=%h  bvalid=%d",
+            AR_pcrready, AR_arready, AR_rdata, AR_rvalid, AR_inst, AR_irvalid, AR_awready,
+            AR_wready, AR_bresp, AR_bvalid);
+        $display(
+            "\t   m_araddr=%h  m_arvalid=%d  m_rready=%d  m_awaddr=%h  m_awvalid=%d  m_wdata=%h  m_wstrb=%h  m_wvalid=%d  m_bready=%d",
+            AR_m_araddr, AR_m_arvalid, AR_m_rready, AR_m_awaddr, AR_m_awvalid, AR_m_wdata,
+            AR_m_wstrb, AR_m_wvalid, AR_m_bready);
+    end
 
 endmodule

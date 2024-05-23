@@ -1,5 +1,5 @@
 #include "VTop.h"
-#include "tracer.h"
+#include "logger.h"
 #include "utils.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
@@ -26,7 +26,6 @@ extern "C" void bad_finish()
     exit_code = 1;
 }
 
-Tracer tracer;
 Logger logger;
 
 class Memory_t
@@ -34,7 +33,7 @@ class Memory_t
     uint8_t theMemory[MEMORY_SIZE];
 
 public:
-    uint32_t operator[](uint32_t addr)
+    uint32_t &operator[](uint32_t addr)
     {
         if (MBASE <= addr && addr <= MBASE + MEMORY_SIZE)
             return *(uint32_t *)&theMemory[addr - MBASE];
@@ -66,56 +65,23 @@ public:
     }
 } Memory;
 
-extern "C" void data_read(uint32_t addr, bool re, uint32_t *dout, bool *err)
+extern "C" int mem_read(uint32_t addr)
 {
-    *err = false;
-    // tracer.RmemTrace()
-    try
-    {
-        if (re)
-        {
-            *dout = Memory[addr];
-            tracer.RmemTrace(addr, *dout);
-        }
-        else
-        {
-            *dout == 0;
-        }
-    }
-    catch (int)
-    {
-        *err = true;
-    }
+    return Memory[addr];
 }
 
-extern "C" void data_write(uint32_t addr, bool we, uint32_t din, uint32_t dsize0, bool *err)
+extern "C" bool mem_write(uint32_t addr, uint32_t data, bool wstrb0, bool wstrb1, bool wstrb2, bool wstrb3)
 {
-    *err = false;
-    try
-    {
-        if (we)
-        {
-            Memory.Write(addr, din, dsize0);
-            tracer.WmemTrace(addr, din, 1 << dsize0);
-        }
-    }
-    catch (int)
-    {
-        *err = true;
-    }
-}
-
-extern "C" void inst_read(uint32_t pc, uint32_t *inst, bool *err)
-{
-    *err = false;
-    try
-    {
-        *inst = Memory[pc];
-    }
-    catch (int)
-    {
-        *err = true;
-    }
+    uint32_t &word = Memory[addr];
+    if (wstrb0)
+        word = (word & 0xffffff00) | (data & 0x000000ff);
+    if (wstrb1)
+        word = (word & 0xffff00ff) | (data & 0x0000ff00);
+    if (wstrb2)
+        word = (word & 0xff00ffff) | (data & 0x00ff0000);
+    if (wstrb3)
+        word = (word & 0x00ffffff) | (data & 0xff000000);
+    return true;
 }
 
 class Sim
@@ -131,7 +97,7 @@ public:
         ctx->traceEverOn(true);
         top = new VTop{ctx};
         tfp = new VerilatedVcdC;
-        top->trace(tfp, 0);
+        top->trace(tfp, 2);
         tfp->open("wave.vcd");
     }
     void Init()
@@ -161,21 +127,8 @@ public:
     {
         ctx->timeInc(1);
         top->clk = !top->clk;
-        tracer.Update(top->clk);
         top->eval();
         tfp->dump(ctx->time());
-        // logger.YellowFont("%s %d",__FILE__, __LINE__);
-        if (top->clk)
-        {
-            // tracer.InstTrace(
-            //     top->rootp->ysyx_23060063_top__DOT__pc,
-            //     top->rootp->ysyx_23060063_top__DOT__inst);
-            // tracer.FuncTrace(
-            //     top->rootp->ysyx_23060063_top__DOT__pc,
-            //     top->rootp->ysyx_23060063_top__DOT__dnpc,
-            //     // the snpc disappear
-            //     top->rootp->ysyx_23060063_top__DOT__pc + 4);
-        }
     }
     ~Sim()
     {
@@ -189,18 +142,22 @@ public:
 int main(int argc, char **argv)
 {
     // printf("IMG:%s\n", argv[1]);
-    logger.Log<Logger::BLACK, Logger::WHITE>(argv[1]);
+    // logger.Log<Logger::BLACK, Logger::WHITE>("bin:%s\ntxt:%s", argv[1], argv[2]);
     // init_disasm("riscv32-pc-linux-gnu");
-    Memory.loadImg(stringf("%s.bin", argv[1]).c_str());
-    tracer.Init(stringf("%s.txt", argv[1]).c_str());
+    Memory.loadImg(argv[1]);
+    // tracer.Init(stringf("%s.txt", argv[1]).c_str());
     Sim *sim = new Sim();
+
+    int t = 500;
     for (sim->Init(); !sim->Finish(); sim->Update())
     {
+        t--;
+        if (t == 0)
+        {
+            break;
+        }
         // logger.YellowFont("%d", __LINE__);
     }
-    tracer.Log(-1);
     delete sim;
     return exit_code;
 }
-
-

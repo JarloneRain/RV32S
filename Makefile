@@ -7,6 +7,7 @@ VERILATOR_CFLAGS += -MMD --build -cc  \
 				-O3 --x-assign fast --x-initial fast --noassert \
 				--report-unoptflat
 TOPNAME=Top
+INC_PATH ?=
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
 CFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
@@ -38,17 +39,21 @@ $(SIM_BIN): $(VSRCS) $(CSRCS)
 	mkdir -p $(SIM_OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $^ \
+		-I/home/looooong/RV32S/sim/vsrc \
 		$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(SIM_OBJ_DIR) --exe -o $(abspath $(SIM_BIN)) --trace
+		--Mdir $(SIM_OBJ_DIR) --exe -o $(abspath $(SIM_BIN)) --trace --trace-depth 99
 
 sim: $(SIM_BIN) $(TEST_FILE)
 	$(SIM_BIN) $(TEST_FILE)
 
 YOSYS_DIR=sim/yosys
+DOT=$(YOSYS_DIR)/my_design.dot
 
-yosys: $(YOSYS_DIR)/script.ys $(VSRCS)
+$(DOT): $(YOSYS_DIR)/script.ys $(VSRCS)
 	cd $(YOSYS_DIR) && yosys script.ys
-	dot -Tpng $(YOSYS_DIR)/my_design.dot -o $(YOSYS_DIR)/my_design.png
+
+synt: $(DOT)
+	dot  -Tpng $(DOT) -o $(YOSYS_DIR)/my_design.png
 
 clean:
 	rm $(TEST_BUILD_DIR)/*
