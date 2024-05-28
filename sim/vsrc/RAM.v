@@ -68,9 +68,10 @@ module RAM (
             _wvalid  <= 0;
             bvalid   <= 0;
         end else begin
+            //$display("rready=%d, rvalid=%d ", rready, rvalid);
             // 读取的逻辑
-            if (arready) begin  // 可以写入新的读取地址
-                _arvalid <= arvalid;
+            if (arready & arvalid) begin  // 可以写入新的读取地址
+                _arvalid <= 1;
                 _araddr  <= araddr;
                 rvalid   <= 0;
             end else if (_arvalid) begin  // 读取地址可用，读取数据
@@ -78,6 +79,7 @@ module RAM (
                 rvalid   <= 1;
                 _arvalid <= 0;
             end else if (rready & rvalid) begin  // 数据已被读走
+                //$display("rready=%d, rvalid=%d,82 ", rready, rvalid);
                 rvalid <= 0;
             end
             // 写入

@@ -309,9 +309,9 @@ S指令集除了依赖的F指令集所携带的32个浮点寄存器外，还有3
 这五个阶段除了有各自的必要存储器外，还有用于控制流水线的XX_CTRL控制器。通常情况下，流水控制器都有输出到上一阶段的ready信号和输出到下一阶段的valid信号。其中ready信号是组合逻辑，valid信号用有一个专用的寄存器存储。伪代码表示如下：
 
 ```verilog
-assign 本阶段的ready = 下一阶段的ready | !本阶段的valid;
+assign ready = 下一阶段的ready | !本阶段的valid;
 always@(posedge clk)
-    本阶段的valid <= 本阶段的ready & 上一阶段的valid;
+    valid <= ready ? 上一阶段的valid : 本阶段的valid;
 ```
 
 一些特殊的情况：
@@ -320,6 +320,6 @@ always@(posedge clk)
 2. 写回阶段总是ready的
 3. 当前指令流中存在分支或跳转指令时，IF不接受新的指令
 4. 当前指令流中存在写后读冲突时，ID不接受新的指令
-5. 当DATA_CACHE的valid=0时（正在读写数据），ME不接受新的指令
+5. 当DATA_CACHE正在读写数据时，ME不接受新的指令，valid保持
 
 上述的第2、3点的目的是用流水线停顿法解决流水线冒险。

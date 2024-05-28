@@ -9,20 +9,13 @@ module IF_CTRL (
     input AR_valid,
     input ID_ready,
     // 解决分支问题
-    input ID_pc_opt,
-    input I1_valid,
-    input I1_pc_opt,
-    input I2_valid,
-    input I2_pc_opt,
-    input I3_valid,
-    input I3_pc_opt
+    input pc_opt
 );
-    assign ready = (ID_ready| !valid) 
-                    & !(valid&!ID_pc_opt) 
-                    & !(I1_valid & I1_pc_opt)
-                    & !(I2_valid & I2_pc_opt)
-                    & !(I3_valid & I3_pc_opt);
-    always @(posedge clk) valid <= !rst & ready & AR_valid;
+    assign ready = (ID_ready | !valid) & !pc_opt;
+    always @(posedge clk)
+        if (rst) valid <= 0;
+        else if (ready) valid <= AR_valid;
+        else if (ID_ready) valid <= 0;
 endmodule
 
 module IFU (
@@ -35,6 +28,14 @@ module IFU (
     always @(posedge clk) begin
         if (ready) begin
             inst <= AR_inst;
+            if (inst == 32'h00100073) begin
+                $display("Ebreak");
+                $finish;
+            end
+            if (inst == 32'h00000073) begin
+                $display("Ecall");
+                $finish;
+            end
         end
     end
 endmodule

@@ -25,23 +25,27 @@ module ID_CTRL (
     input [4:0] I2_rd_index,
     input I3_valid,
     input [1:0] I3_rd_group,
-    input [4:0] I3_rd_index
+    input [4:0] I3_rd_index,
+    output conflict
 );
-    wire rs1_conflict_I1 = I1_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I1_rd_group && rs1_index == I1_rd_index);
-    wire rs1_conflict_I2 = I2_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I2_rd_group && rs1_index == I2_rd_index);
-    wire rs1_conflict_I3 = I3_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R & rs1_index != `zero5) & (rs1_group == I3_rd_group && rs1_index == I3_rd_index);
+    wire rs1_conflict_I1 = I1_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R ? rs1_index != `zero5 : 1) & (rs1_group == I1_rd_group && rs1_index == I1_rd_index);
+    wire rs1_conflict_I2 = I2_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R ? rs1_index != `zero5 : 1) & (rs1_group == I2_rd_group && rs1_index == I2_rd_index);
+    wire rs1_conflict_I3 = I3_valid & rs1_group != `REG_GROUP_INVALID & (rs1_group == `REG_GROUP_R ? rs1_index != `zero5 : 1) & (rs1_group == I3_rd_group && rs1_index == I3_rd_index);
 
-    wire rs2_conflict_I1 = I1_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I1_rd_group && rs2_index == I1_rd_index);
-    wire rs2_conflict_I2 = I2_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I2_rd_group && rs2_index == I2_rd_index);
-    wire rs2_conflict_I3 = I3_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R & rs2_index != `zero5) & (rs2_group == I3_rd_group && rs2_index == I3_rd_index);
+    wire rs2_conflict_I1 = I1_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R ? rs2_index != `zero5 : 1) & (rs2_group == I1_rd_group && rs2_index == I1_rd_index);
+    wire rs2_conflict_I2 = I2_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R ? rs2_index != `zero5 : 1) & (rs2_group == I2_rd_group && rs2_index == I2_rd_index);
+    wire rs2_conflict_I3 = I3_valid & rs2_group != `REG_GROUP_INVALID & (rs2_group == `REG_GROUP_R ? rs2_index != `zero5 : 1) & (rs2_group == I3_rd_group && rs2_index == I3_rd_index);
 
-    wire rs3_conflict_I1 = I1_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I1_rd_group && rs3_index == I1_rd_index);
-    wire rs3_conflict_I2 = I2_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I2_rd_group && rs3_index == I2_rd_index);
-    wire rs3_conflict_I3 = I3_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R & rs3_index != `zero5) & (rs3_group == I3_rd_group && rs3_index == I3_rd_index);
+    wire rs3_conflict_I1 = I1_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R ? rs3_index != `zero5 : 1) & (rs3_group == I1_rd_group && rs3_index == I1_rd_index);
+    wire rs3_conflict_I2 = I2_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R ? rs3_index != `zero5 : 1) & (rs3_group == I2_rd_group && rs3_index == I2_rd_index);
+    wire rs3_conflict_I3 = I3_valid & rs3_group != `REG_GROUP_INVALID & (rs3_group == `REG_GROUP_R ? rs3_index != `zero5 : 1) & (rs3_group == I3_rd_group && rs3_index == I3_rd_index);
 
-    wire conflict = rs1_conflict_I1 | rs1_conflict_I2 | rs1_conflict_I3 | rs2_conflict_I1 | rs2_conflict_I2 | rs2_conflict_I3 | rs3_conflict_I1 | rs3_conflict_I2 | rs3_conflict_I3;
+    assign conflict = IF_valid & (rs1_conflict_I1 | rs1_conflict_I2 | rs1_conflict_I3 | rs2_conflict_I1 | rs2_conflict_I2 | rs2_conflict_I3 | rs3_conflict_I1 | rs3_conflict_I2 | rs3_conflict_I3);
     assign ready = (EX_ready | !valid) & !conflict;
-    always @(posedge clk) valid <= !rst & ready & IF_valid;
+    always @(posedge clk)
+        if (rst) valid <= 0;
+        else if (ready) valid <= IF_valid;
+        else if (EX_ready) valid <= 0;
 endmodule
 
 // 纯组合逻辑
@@ -113,8 +117,8 @@ module IDU (
             begin
                 rd_group  = `REG_GROUP_R;
                 rd_index  = inst[11:7];
-                rs1_group = `REG_GROUP_INVALID;
-                rs1_index = `zero5;
+                rs1_group = `REG_GROUP_R;
+                rs1_index = inst[19:15];
                 rs2_group = `REG_GROUP_INVALID;
                 rs2_index = `zero5;
                 rs3_group = `REG_GROUP_INVALID;
@@ -161,6 +165,84 @@ module IDU (
                 rs1_index = inst[19:15];
                 rs2_group = `REG_GROUP_R;
                 rs2_index = inst[24:20];
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
+            end
+            //RV32F
+            7'b0000111:  //flw
+            begin
+                rd_group  = `REG_GROUP_F;
+                rd_index  = inst[11:7];
+                rs1_group = `REG_GROUP_R;
+                rs1_index = inst[19:15];
+                rs2_group = `REG_GROUP_INVALID;
+                rs2_index = `zero5;
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
+            end
+            7'b0100111:  //fsw
+            begin
+                rd_group  = `REG_GROUP_INVALID;
+                rd_index  = `zero5;
+                rs1_group = `REG_GROUP_R;
+                rs1_index = inst[19:15];
+                rs2_group = `REG_GROUP_F;
+                rs2_index = inst[11:7];
+                rs3_group = `REG_GROUP_INVALID;
+                rs3_index = `zero5;
+            end
+            7'b1000011,7'b1000111,7'b1001011,7'b1001111:  //R4
+            begin
+                rd_group  = `REG_GROUP_F;
+                rd_index  = inst[11:7];
+                rs1_group = `REG_GROUP_F;
+                rs1_index = inst[19:15];
+                rs2_group = `REG_GROUP_F;
+                rs2_index = inst[24:20];
+                rs3_group = `REG_GROUP_F;
+                rs3_index = inst[31:27];
+            end
+            7'b1010011://R
+            begin
+                case (funct7)
+                    7'b1100000,  //fcvt.w(u).s
+                    7'b1110000:  //fmv, fclass
+                    begin
+                        rd_group  = `REG_GROUP_R;
+                        rd_index  = inst[11:7];
+                        rs1_group = `REG_GROUP_F;
+                        rs1_index = inst[19:15];
+                        rs2_group = `REG_GROUP_INVALID;
+                        rs2_index = `zero5;
+                    end
+                    7'b1010000:  //feq,flt,fle
+                    begin
+                        rd_group  = `REG_GROUP_R;
+                        rd_index  = inst[11:7];
+                        rs1_group = `REG_GROUP_F;
+                        rs1_index = inst[19:15];
+                        rs2_group = `REG_GROUP_F;
+                        rs2_index = inst[24:20];
+                    end
+                    7'b1101000,  //fcvt.s.w(u)
+                    7'b1111000:  //fmv.w.x
+                    begin
+                        rd_group  = `REG_GROUP_F;
+                        rd_index  = inst[11:7];
+                        rs1_group = `REG_GROUP_R;
+                        rs1_index = inst[19:15];
+                        rs2_group = `REG_GROUP_INVALID;
+                        rs2_index = `zero5;
+                    end
+                    default: begin
+                        rd_group  = `REG_GROUP_F;
+                        rd_index  = inst[11:7];
+                        rs1_group = `REG_GROUP_F;
+                        rs1_index = inst[19:15];
+                        rs2_group = `REG_GROUP_F;
+                        rs2_index = inst[24:20];
+                    end
+                endcase
                 rs3_group = `REG_GROUP_INVALID;
                 rs3_index = `zero5;
             end
@@ -218,14 +300,14 @@ module Inst1 (
 );
     always @(posedge clk) begin
         if (ready) begin
-            opcode    <= _opcode;
-            funct7    <= _funct7;
-            funct3    <= _funct3;
-            funct3Y   <= _funct3Y;
-            funct2R4  <= _funct2R4;
+            opcode   <= _opcode;
+            funct7   <= _funct7;
+            funct3   <= _funct3;
+            funct3Y  <= _funct3Y;
+            funct2R4 <= _funct2R4;
             //
-            rd_group  <= _rd_group;
-            rd_index  <= _rd_index;
+            rd_group <= _rd_group;
+            rd_index <= _rd_index;
             // rs1_group <= _rs1_group;
             // rs1_index <= _rs1_index;
             // rs2_group <= _rs2_group;
@@ -233,7 +315,7 @@ module Inst1 (
             // rs3_group <= _rs3_group;
             // rs3_index <= _rs3_index;
             //
-            pc_opt    <= _pc_opt;
+            pc_opt   <= _pc_opt;
         end
     end
 endmodule

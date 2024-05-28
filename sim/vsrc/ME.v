@@ -13,7 +13,10 @@ module ME_CTRL (
 
     assign ready = (WB_ready | !valid) & (Data_Cache_state == `STATE_FREE);
     // 别忘记数据缓存的逻辑
-    always @(posedge clk) valid <= !rst & ready & EX_valid;
+    always @(posedge clk)
+        if (rst) valid <= 0;
+        else valid <= ready ? EX_valid : valid;
+    //& (Data_Cache_state==`STATE_FINISH || Data_Cache_state == `STATE_FREE)//
 endmodule
 
 
@@ -44,16 +47,18 @@ module Inst3 (
     output reg pc_opt
 );
     always @(posedge clk) begin
-        opcode   <= _opcode;
-        funct7   <= _funct7;
-        funct3   <= _funct3;
-        funct3Y  <= _funct3Y;
-        funct2R4 <= _funct2R4;
-        //
-        rd_group <= _rd_group;
-        rd_index <= _rd_index;
-        //
-        pc_opt   <= _pc_opt;
+        if (ready) begin
+            opcode   <= _opcode;
+            funct7   <= _funct7;
+            funct3   <= _funct3;
+            funct3Y  <= _funct3Y;
+            funct2R4 <= _funct2R4;
+            //
+            rd_group <= _rd_group;
+            rd_index <= _rd_index;
+            //
+            pc_opt   <= _pc_opt;
+        end
     end
 endmodule
 

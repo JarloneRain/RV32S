@@ -30,7 +30,7 @@ partial class Tracer
 {
     public bool TracerOn { get; set; } = false;
 
-    readonly Dictionary<uint, InstInfo> instInfos = new();
+    readonly Dictionary<uint, InstInfo> instInfos = [];
 
     readonly Dictionary<uint, XTracer> traces = new() { [0] = new XTracer() };
 
@@ -88,7 +88,7 @@ partial class Tracer
     public void InstTrace(uint pc)
     {
         if (!TracerOn) return;
-        traces[T].Inst += $"{pc:X8} : {instInfos[pc].Text}\n";
+        traces[T].Inst += $"{pc:X8} : {instInfos[pc].Code:X8}\t{instInfos[pc].Text}\n";
     }
 
     public void MemReadTrace(uint addr, int bytes, uint value)
@@ -131,10 +131,12 @@ partial class Tracer
             return;
         }
         Console.ForegroundColor = ConsoleColor.DarkYellow;
-        for (uint i = T >= n ? T - n + 1 : 1; i <= T; i++)
+        uint m = T >= n ? T - n + 1 : 1;
+        for (uint i = m; i <= T; i++)
         {
             Console.Write(traces[i]);
         }
+        Console.WriteLine($"Recent {T - m + 1} trace of {T}.");
         Console.ResetColor();
     }
 

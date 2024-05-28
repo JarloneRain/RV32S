@@ -1,6 +1,8 @@
 `include "define.v"
 
 module AR (
+    input clk,
+    input rst,
     // AXI 读地址通道兼指令地址
     input [31:0] pcraddr,
     input pcrvalid,
@@ -51,24 +53,47 @@ module AR (
     input m_bvalid,
     output m_bready
 );
-    wire data_req = arvalid | rready | awvalid | wvalid | bready;
-    assign pcrready  = m_arready & !data_req;
-    assign arready   = m_arready;
+    reg ri0d1;
+    reg rbusy;
+    assign pcrready  = m_arready & !rbusy & !arvalid;
+    assign arready   = m_arready & !rbusy;
     assign rdata     = m_rdata;
-    assign rvalid    = m_rvalid & data_req;
+    assign rvalid    = m_rvalid & rbusy & ri0d1;
     assign inst      = m_rdata;
-    assign irvalid   = m_rvalid & !data_req;
+    assign irvalid   = m_rvalid & rbusy & !ri0d1;
     assign awready   = m_awready;
     assign wready    = m_wready;
     assign bresp     = m_bresp;
     assign bvalid    = m_bvalid;
-    assign m_araddr  = data_req ? araddr : pcraddr;
-    assign m_arvalid = data_req ? arvalid : pcrvalid;
-    assign m_rready  = data_req ? rready : irready;
+    assign m_araddr  = arvalid ? araddr : pcraddr;
+    assign m_arvalid = !rbusy & (arvalid | pcrvalid);
+    assign m_rready  = rbusy & (ri0d1 ? rready : irready);
     assign m_awaddr  = awaddr;
     assign m_awvalid = awvalid;
     assign m_wdata   = wdata;
     assign m_wstrb   = wstrb;
     assign m_wvalid  = wvalid;
     assign m_bready  = bready;
+    always @(posedge clk) begin
+        if (rst) begin
+            ri0d1 <= 0;
+            rbusy <= 0;
+        end else begin
+            if (!rbusy) begin
+                if (arvalid) begin
+                    rbusy <= 1;
+                    ri0d1 <= 1;
+                end else if (pcrvalid) begin
+                    rbusy <= 1;
+                    ri0d1 <= 0;
+                end
+            end else begin
+                if (m_rvalid & (ri0d1 ? rready : irready)) begin
+                    rbusy <= 0;
+                end
+            end
+        end
+        // $display("rbusy:%d m_arready:%d\npcrready:%d arready:%d",  //
+        //          rbusy, m_arready, pcrready, arready);
+    end
 endmodule

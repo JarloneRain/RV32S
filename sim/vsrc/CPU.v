@@ -35,6 +35,7 @@ module CPU (
     //  ID_CTRL
     wire ID_CTRL_valid;
     wire ID_CTRL_ready;
+    wire ID_CTRL_conflict;// just for debug
     //  IDU
     wire [6:0] IDU_opcode;
     wire [6:0] IDU_funct7;
@@ -195,6 +196,11 @@ module CPU (
     wire [3:0] AR_m_wstrb;
     wire AR_m_wvalid;
     wire AR_m_bready;
+    wire pc_opt = (IF_CTRL_valid & IDU_pc_opt)
+                | (ID_CTRL_valid & Inst1_pc_opt)
+                | (EX_CTRL_valid & Inst2_pc_opt)
+                | (ME_CTRL_valid & Inst3_pc_opt);
+    wire we_PC = ME_CTRL_valid & Inst3_pc_opt;
 
     IF_CTRL _IF_CTRL (
         .clk(clk),
@@ -203,13 +209,7 @@ module CPU (
         .ready(IF_CTRL_ready),
         .AR_valid(AR_irvalid),
         .ID_ready(ID_CTRL_ready),
-        .ID_pc_opt(IDU_pc_opt),
-        .I1_valid(ID_CTRL_valid),
-        .I1_pc_opt(Inst1_pc_opt),
-        .I2_valid(EX_CTRL_valid),
-        .I2_pc_opt(Inst2_pc_opt),
-        .I3_valid(ME_CTRL_valid),
-        .I3_pc_opt(Inst3_pc_opt)
+        .pc_opt(pc_opt)
     );
 
     IFU _IFU (
@@ -247,7 +247,8 @@ module CPU (
         .I2_rd_index(Inst2_rd_index),
         .I3_valid(ME_CTRL_valid),
         .I3_rd_group(Inst3_rd_group),
-        .I3_rd_index(Inst3_rd_index)
+        .I3_rd_index(Inst3_rd_index),
+        .conflict(ID_CTRL_conflict)
     );
 
     IDU _IDU (
@@ -388,14 +389,14 @@ module CPU (
         .funct3(Inst1_funct3),
         .funct3Y(Inst1_funct3Y),
         .funct2R4(Inst1_funct2R4),
-        .immU (Srcs_immU),
-        .immJ (Srcs_immJ),
-        .immB (Srcs_immB),
-        .immS (Srcs_immS),
-        .immI (Srcs_immI),
-        .matI (Srcs_matI),
-        .matJ (Srcs_matJ),
-        .snpc   (PC2_snpc),
+        .immU(Srcs_immU),
+        .immJ(Srcs_immJ),
+        .immB(Srcs_immB),
+        .immS(Srcs_immS),
+        .immI(Srcs_immI),
+        .matI(Srcs_matI),
+        .matJ(Srcs_matJ),
+        .snpc(PC2_snpc),
         .src1R(Srcs_src1R),
         .src2R(Srcs_src2R),
         .src3R(Srcs_src3R),
@@ -405,7 +406,7 @@ module CPU (
         .src1M(Srcs_src1M),
         .src2M(Srcs_src2M),
         .src3M(Srcs_src3M),
-        .npc  (ALU_npc),
+        .npc(ALU_npc),
         .res_R(ALU_res_R),
         .res_F(ALU_res_F),
         .res_M(ALU_res_M)
@@ -479,9 +480,9 @@ module CPU (
         .rst(rst),
         .ready(ME_CTRL_ready),
         .state(DC_state),
-        ._opcode(Inst2_opcode),
-        ._funct3(Inst2_funct3),
-        ._addr(ALU_OUT1_res_R),
+        .opcode(Inst2_opcode),
+        .funct3(Inst2_funct3),
+        .addr(ALU_OUT1_res_R),
         .wdata_R(ALU_OUT1_rs2_R),
         .wdata_F(ALU_OUT1_rs2_F),
         .wdata_M(ALU_OUT1_rs2_M),
@@ -572,14 +573,17 @@ module CPU (
         .rst(rst),
         .ME_valid(ME_CTRL_valid),
         .AR_ready(AR_pcrready),
-        .IF_ready(IF_CTRL_ready),
+        .IF_valid(IF_CTRL_valid),
         .valid(PC_valid),
-        .pc_opt(Inst3_pc_opt),
+        .we(we_PC),
         .npc(ALU_OUT2_npc),
-        .pc(PC_pc)
+        .pc(PC_pc),
+        .pc_opt(pc_opt)
     );
 
     AR _AR (
+        .clk(clk),
+        .rst(rst),
         .pcraddr(PC_pc),
         .pcrvalid(PC_valid),
         .pcrready(AR_pcrready),
@@ -632,28 +636,28 @@ module CPU (
 
     integer t = 0;
     always @(posedge clk) begin
-        $display("t=%d rst=%d", t, rst);
+        $display("\nt=%d rst=%d pc_opt=%d", t, rst, pc_opt);
         t = t + 1;
         $display("\tIF valid=%d  ready=%d", IF_CTRL_valid, IF_CTRL_ready);
-        //if (IF_CTRL_valid) begin
+        if (IF_CTRL_valid) begin
             $display("\t\tIFU inst=%h", IFU_inst);
             $display("\t\tPC1 snpc=%h", PC1_snpc);
             $display("\t\tIDU opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
                      IDU_opcode, IDU_funct7, IDU_funct3, IDU_funct3Y, IDU_funct2R4);
             $display(
-                "\t\tIDU rd_group=%h  rd_index=%h  rs1_group=%h  rs1_index=%h  rs2_group=%h  rs2_index=%h  rs3_group=%h  rs3_index=%h",
+                "\t\tIDU rd_group=%d  rd_index=%d  rs1_group=%d  rs1_index=%d  rs2_group=%d  rs2_index=%d  rs3_group=%d  rs3_index=%d",
                 IDU_rd_group, IDU_rd_index, IDU_rs1_group, IDU_rs1_index, IDU_rs2_group,
                 IDU_rs2_index, IDU_rs3_group, IDU_rs3_index);
             $display("\t\tIDU immU=%h  immJ=%h  immB=%h  immS=%h  immI=%h  matI=%h  matJ=%h",
                      IDU_immU, IDU_immJ, IDU_immB, IDU_immS, IDU_immI, IDU_matI, IDU_matJ);
             $display("\t\tIDU pc_opt=%d", IDU_pc_opt);
-        //end
-        $display("\tID valid=%d  ready=%d", ID_CTRL_valid, ID_CTRL_ready);
-        //if (ID_CTRL_valid) begin
+        end
+        $display("\tID valid=%d  ready=%d conflict=%d", ID_CTRL_valid, ID_CTRL_ready,ID_CTRL_conflict);
+        if (ID_CTRL_valid) begin
             $display("\t\tInst1 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
                      Inst1_opcode, Inst1_funct7, Inst1_funct3, Inst1_funct3Y, Inst1_funct2R4);
-            $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst1_rd_group, Inst1_rd_index,
-                     Inst1_pc_opt);
+            $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d",  //
+                     Inst1_rd_group, Inst1_rd_index, Inst1_pc_opt);
             $display("\t\tSrcs immU=%h  immJ=%h  immB=%h  immS=%h  immI=%h  matI=%h  matJ=%h",
                      Srcs_immU, Srcs_immJ, Srcs_immB, Srcs_immS, Srcs_immI, Srcs_matI, Srcs_matJ);
             $display("\t\t     scr1R=%h  scr2R=%h  scr3R=%h  scr1F=%h  scr2F=%h  scr3F=%h",
@@ -661,28 +665,32 @@ module CPU (
             $display("\t\tPC2 snpc=%h", PC2_snpc);
             $display("\t\tALU npc=%h  res_R=%h  res_F=%h  res_M=%h", ALU_npc, ALU_res_R, ALU_res_F,
                      ALU_res_M);
-        // end
+        end
         $display("\tEX valid=%d  ready=%d", EX_CTRL_valid, EX_CTRL_ready);
-        //if (EX_CTRL_valid) begin
+        if (EX_CTRL_valid) begin
             $display("\t\tInst2 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
                      Inst2_opcode, Inst2_funct7, Inst2_funct3, Inst2_funct3Y, Inst2_funct2R4);
+            $display(
+                "\t\t      rs1_group=%d rs1_index=%d rs2_group=%d rs2_index=%d rs3_group=%d rs3_index=%d",
+                Inst1_rs1_group, Inst1_rs1_index, Inst1_rs2_group, Inst1_rs2_index,
+                Inst1_rs3_group, Inst1_rs3_index);
             $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst2_rd_group, Inst2_rd_index,
                      Inst3_pc_opt);
             $display(
                 "\t\tALU_OUT1 npc=%h  res_R=%h  res_F=%h  res_M=%h  rs2_R=%h  rs2_F=%h  rs2_M=%h",
                 ALU_OUT1_npc, ALU_OUT1_res_R, ALU_OUT1_res_F, ALU_OUT1_res_M, ALU_OUT1_rs2_R,
                 ALU_OUT1_rs2_F, ALU_OUT1_rs2_M);
-        //end
+        end
         $display(
-            "\tData_Cache state=%h  rdata_R_valid=%d  rdata_R=%h  rdata_F_valid=%d  rdata_F=%h  rdata_M_valid=%d  rdata_M=%h",
+            "\t  Data_Cache state=%h  rdata_R_valid=%d  rdata_R=%h  rdata_F_valid=%d  rdata_F=%h  rdata_M_valid=%d  rdata_M=%h",
             DC_state, DC_rdata_R_valid, DC_rdata_R, DC_rdata_F_valid, DC_rdata_F, DC_rdata_M_valid,
             DC_rdata_M);
         $display(
-            "\tData_Cache maraddr=%h  marvalid=%d  mrready=%d  mawaddr=%h  mawvalid=%d  mwdata=%h  mwstrb=%h  mwvalid=%d  mbready=%d",
+            "\t  Data_Cache maraddr=%h  marvalid=%d  mrready=%d  mawaddr=%h  mawvalid=%d  mwdata=%h  mwstrb=%h  mwvalid=%d  mbready=%d",
             DC_maraddr, DC_marvalid, DC_mrready, DC_mawaddr, DC_mawvalid, DC_mwdata, DC_mwstrb,
             DC_mwvalid, DC_mbready);
         $display("\tME valid=%d  ready=%d", ME_CTRL_valid, ME_CTRL_ready);
-        //if (ME_CTRL_valid) begin
+        if (ME_CTRL_valid) begin
             $display("\t\tInst3 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
                      Inst3_opcode, Inst3_funct7, Inst3_funct3, Inst3_funct3Y, Inst3_funct2R4);
             $display("\t\t      rd_group=%d rd_index=%d pc_opt=%d", Inst3_rd_group, Inst3_rd_index,
@@ -690,13 +698,15 @@ module CPU (
             $display("\t\tALU_OUT2 npc=%h  res_R=%h  res_F=%h  res_M=%h", ALU_OUT2_npc,
                      ALU_OUT2_res_R, ALU_OUT2_res_F, ALU_OUT2_res_M);
             $display("\t\tGprMux we=%d  R=%h  F=%h  M=%h", GprMux_we, GprMux_R, GprMux_F, GprMux_M);
-        //end
-        $display("\tWB valid=%d  ready=%d", WB_CTRL_valid, WB_CTRL_ready);
-        $display(
-            "\t\tGpr dout_R_rs1=%h  dout_F_rs1=%h  dout_M_rs1=%h  dout_R_rs2=%h  dout_F_rs2=%h  dout_M_rs2=%h  dout_R_rs3=%h  dout_F_rs3=%h  dout_M_rs3=%h",
-            Gpr_dout_R_rs1, Gpr_dout_F_rs1, Gpr_dout_M_rs1, Gpr_dout_R_rs2, Gpr_dout_F_rs2,
-            Gpr_dout_M_rs2, Gpr_dout_R_rs3, Gpr_dout_F_rs3, Gpr_dout_M_rs3);
-        $display("\t\tPC valid=%d  pc=%h", PC_valid, PC_pc);
+        end
+        //$display("\tWB valid=%d  ready=%d", WB_CTRL_valid, WB_CTRL_ready);
+        $display("\tGpr dout_R_rs1=%h  dout_F_rs1=%h  dout_M_rs1=%h",  //
+                 Gpr_dout_R_rs1, Gpr_dout_F_rs1, Gpr_dout_M_rs1);
+        $display("\t    dout_R_rs2=%h  dout_F_rs2=%h  dout_M_rs2=%h",  //
+                 Gpr_dout_R_rs2, Gpr_dout_F_rs2, Gpr_dout_M_rs2);
+        $display("\t    dout_R_rs3=%h  dout_F_rs3=%h  dout_M_rs3=%h",  //
+                 Gpr_dout_R_rs3, Gpr_dout_F_rs3, Gpr_dout_M_rs3);
+        $display("\tPC valid=%d  pc=%h", PC_valid, PC_pc);
         $display(
             "\tAR pcrready=%d  arready=%d  rdata=%h  rvalid=%d  inst=%h  irvalid=%d  awready=%d  wready=%d  bresp=%h  bvalid=%d",
             AR_pcrready, AR_arready, AR_rdata, AR_rvalid, AR_inst, AR_irvalid, AR_awready,
@@ -705,6 +715,19 @@ module CPU (
             "\t   m_araddr=%h  m_arvalid=%d  m_rready=%d  m_awaddr=%h  m_awvalid=%d  m_wdata=%h  m_wstrb=%h  m_wvalid=%d  m_bready=%d",
             AR_m_araddr, AR_m_arvalid, AR_m_rready, AR_m_awaddr, AR_m_awvalid, AR_m_wdata,
             AR_m_wstrb, AR_m_wvalid, AR_m_bready);
+        //AXI
+        $display("\tAXI");
+        $display("\t\taraddr=%h,arvalid =%b, arready=%b",  //
+                 AXI_araddr, AXI_arvalid, AXI_arready);
+        $display("\t\trdata =%h, rvalid =%b, rready =%b",  //
+                 AXI_rdata, AXI_rvalid, AXI_rready);
+        $display("\t\tawaddr=%h, awvalid=%b, awready=%b",  //
+                 AXI_awaddr, AXI_awvalid, AXI_awready);
+        $display("\t\twdata =%h, wvalid =%b, wready =%b, wstrb=%h",  //
+                 AXI_wdata, AXI_wvalid, AXI_wready, AXI_wstrb);
+        $display("\t\tbresp =%h, bvalid =%b, bready =%b",  //
+                 AXI_bresp, AXI_bvalid, AXI_bready);
+
     end
 
 endmodule

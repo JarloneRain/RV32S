@@ -1,5 +1,6 @@
 `include "define.v"
 
+// 写回阶段valid没有意义，但为了保持一致性懒得删
 module WB_CTRL (
     input clk,
     input rst,
@@ -103,12 +104,38 @@ module GprMux (
                 F  = 0;
                 M  = 0;
             end
-            // type R4 type R
-            7'b1000011, 7'b1010011: begin
+            // type R4
+            7'b1000011: begin
                 we = ME_valid;
                 R  = 0;
                 F  = ALU_OUT2_res_F;
                 M  = 0;
+            end
+            // RV32F type R
+            7'b1010011: begin
+                we = ME_valid;
+                case (funct7)
+                    //fcvt.w(u).s
+                    7'b1100000: begin
+                        R = ALU_OUT2_res_R;
+                        F = 0;
+                    end
+                    // fmv.s
+                    7'b1110000: begin
+                        R = ALU_OUT2_res_R;
+                        F = 0;
+                    end
+                    // feq.s flt.s fle.s 
+                    7'b1010000: begin
+                        R = ALU_OUT2_res_R;
+                        F = 0;
+                    end
+                    default: begin
+                        R = 0;
+                        F = ALU_OUT2_res_F;
+                    end
+                endcase
+                M = 0;
             end
             // type Y
             7'b1010111: begin
@@ -222,8 +249,14 @@ module Gpr (
                         $display("R[%d]<=%h", rd_index, din_R);
                     end
                 end
-                `REG_GROUP_F: F[rd_index] <= din_F;
-                `REG_GROUP_M: M[rd_index] <= din_M;
+                `REG_GROUP_F: begin
+                    F[rd_index] <= din_F;
+                    $display("F[%d]<=%h", rd_index, din_F);
+                end
+                `REG_GROUP_M: begin
+                    M[rd_index] <= din_M;
+                    $display("M[%d]<=%h", rd_index, din_M);
+                end
                 `REG_GROUP_INVALID:  /*do nothing*/;
             endcase
         end
@@ -236,22 +269,40 @@ module PC (
     // 这不是通信协议
     input ME_valid,
     input AR_ready,
-    input IF_ready,
-    output valid,
-    input pc_opt,
+    input IF_valid,
+    output reg valid,
+    input we,
     input [31:0] npc,
-    output reg [31:0] pc
+    output reg [31:0] pc,
+    input pc_opt
 );
-    assign valid = IF_ready;
+    // assign valid = IF_ready;
     always @(posedge clk) begin
         if (rst) begin
-            pc <= `PC_BASE;
+            valid <= 1;
+            pc    <= `PC_BASE;
         end else begin
-            if (pc_opt & ME_valid) begin
-                pc <= npc;
-            end else if (AR_ready & valid) begin
-                pc <= pc + 4;
+            if (valid) begin
+                if (AR_ready) begin
+                    pc    <= pc + 4;
+                    valid <= 0;
+                end
+            end else begin
+                if (we & ME_valid) begin
+                    pc    <= npc;
+                    valid <= 1;
+                end else if (IF_valid) begin
+                    valid <= !pc_opt;
+                end
             end
+
+
+            // if (pc_opt & ME_valid) begin
+            //     pc <= npc;
+            // end else if (AR_ready & valid) begin
+            //     pc    <= pc + 4;
+            //     valid <= 0;
+            // end 
         end
     end
 

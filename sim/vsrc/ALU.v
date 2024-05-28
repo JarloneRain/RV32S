@@ -32,6 +32,14 @@ module ALU (
     output reg [511:0] res_M
 );
     wire [31:0] pc = snpc - 4;
+    wire [ 7:0] funct7byte = {1'b0, funct7};
+
+    import "DPI-C" function int fR(
+        input byte funct7,
+        input int  a,
+        input int  b
+    );
+
     always @(*) begin
         case (opcode)
             // RV32I
@@ -196,6 +204,12 @@ module ALU (
                 npc   = snpc;
                 res_R = src1R + immS;
                 res_F = 0;
+                res_M = 0;
+            end
+            7'b1010011: begin  //type R
+                npc   = snpc;
+                res_R = fR(funct7byte, src1R, src2R);
+                res_F = fR(funct7byte, src1F, src2F);
                 res_M = 0;
             end
             default: begin
