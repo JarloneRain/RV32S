@@ -136,7 +136,9 @@ partial class Tracer
     {
         if (!TracerOn)
         {
+            Console.ForegroundColor = ConsoleColor.DarkRed;
             Console.WriteLine("Trecer is off.");
+            Console.ResetColor();
             return;
         }
         Console.ForegroundColor = ConsoleColor.DarkYellow;

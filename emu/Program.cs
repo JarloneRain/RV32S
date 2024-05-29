@@ -1,21 +1,53 @@
 ﻿using System.Globalization;
 
-var build = "/home/looooong/RV32S/tests/build";
-
 string target = args[0];
+bool tracerOn = false;
+bool continueMode = false;
 
-RV32Semu.Tracer tracer = new() { TracerOn = true };
-RV32Semu.Cpu cpu = new RV32Semu.CpuWithTracer(new RV32Semu.Decoder(), new RV32Semu.Gpr(),
-                    new RV32Semu.MemoryWithTracer(tracer), tracer);
+for (int i = 1; i < args.Length; i++)
+{
+    string arg = args[i];
+    if (arg == "-t")
+    {
+        tracerOn = true;
+    }
+    if (arg == "-c")
+    {
+        continueMode = true;
+    }
+}
 
-cpu.Init($"{build}/{target}.bin");
-tracer.Init($"{build}/{target}.txt");
+RV32Semu.Tracer tracer = new() { TracerOn = tracerOn };
+RV32Semu.Cpu cpu;
+
+if (tracerOn)
+{
+    cpu = new RV32Semu.CpuWithTracer(
+            new RV32Semu.Decoder(),
+            new RV32Semu.Gpr(),
+            new RV32Semu.MemoryWithTracer(tracer),
+            tracer);
+    tracer.Init($"{target}.txt");
+}
+else
+{
+    cpu = new RV32Semu.Cpu(
+            new RV32Semu.Decoder(),
+            new RV32Semu.Gpr(),
+            new RV32Semu.Memory());
+
+}
+
+cpu.Init($"{target}.bin");
 
 try
 {
-    PrintLogo();
-    PrintHelp();
-    while (true)
+    if (!continueMode)
+    {
+        PrintLogo();
+        PrintHelp();
+    }
+    while (!continueMode)
     {
         string[] input = Console.ReadLine()?.Split(' ') ?? [];
         if (input.Length == 0) continue;
@@ -84,6 +116,29 @@ try
             Console.ResetColor();
         }
     }
+    // for continue mode
+    try
+    {
+        cpu.Exec(int.MaxValue);
+    }
+    catch (RV32Semu.Ebreak)
+    {
+        cpu.IsFinish = true;
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("SUCCESS!");
+        Console.ResetColor();
+    }
+    catch (RV32Semu.Ecall)
+    {
+        cpu.IsFinish = true;
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("FAIL!");
+        Console.ResetColor();
+    }
+    catch (Exception)
+    {
+        throw;
+    }
 }
 catch (Exception e)
 {
@@ -99,12 +154,14 @@ finally
 {
 }
 
+
 static void PrintHelp()
 {
     Console.Write(@"Commands:
     c     : continue executing
     x N   : execute N instructions
     t N   : show N trace
+    t F   : save trace to file F
     r     : print regs
     m A N : print N words from addr in memory
     h     : help

@@ -48,7 +48,7 @@ class Cpu
 
     public void Exec(int t)
     {
-        for (int i = 0; i < t; i++)
+        while (t-- != 0)
         {
             ExecOnce();
         }
