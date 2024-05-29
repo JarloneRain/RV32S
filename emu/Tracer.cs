@@ -36,7 +36,16 @@ partial class Tracer
 
     readonly List<FuncInfo> funcInfos = [];
     readonly Stack<uint> callStack = new();
-
+    public string TraceText
+    {
+        get
+        {
+            var res = "";
+            foreach (var trace in traces)
+                res += trace.Value.ToString();
+            return res;
+        }
+    }
     uint t = 0;
     public uint T
     {

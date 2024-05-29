@@ -11,11 +11,17 @@ module IF_CTRL (
     // 解决分支问题
     input pc_opt
 );
+    integer n;
     assign ready = (ID_ready | !valid) & !pc_opt;
     always @(posedge clk)
         if (rst) valid <= 0;
         else if (ready) valid <= AR_valid;
         else if (ID_ready) valid <= 0;
+    always @(posedge clk) begin
+        if (rst) n = 0;
+        else if (ready & AR_valid) n = n + 1;
+        $display("n=%d", n);
+    end
 endmodule
 
 module IFU (
@@ -43,7 +49,7 @@ endmodule
 module PC1 (
     input clk,
     input ready,
-    //
+    // 
     input [31:0] PC_snpc,
     output reg [31:0] snpc
 );

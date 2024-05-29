@@ -75,10 +75,10 @@ module Data_Cache (
             state         <= `STATE_FREE;
             mrready       <= 0;
         end else  /* if (ready)*/ begin
-            _funct3 <= funct3;
             case (state)
                 `STATE_FREE:
                 if (ready) begin
+                    _funct3 <= funct3;
                     case (opcode)
                         7'b0000011: begin  //load
                             maraddr  <= addr;
@@ -110,12 +110,22 @@ module Data_Cache (
                             mwdata      <= wdata_F;
                             mwvalid     <= 1;
                             mbready     <= 1;
-                            mwstrb      <= 1 << funct3;
+                            mwstrb      <= (1 << (1 << funct3)) - 1;
                         end
-                        7'b1111111: begin
+                        7'b1111011: begin  // sml(d)
                             case (funct3)
-                                3'b000: state <= `STATE_W_DIAGONAL_0;
-                                3'b001: state <= `STATE_W_MATRIX_00;
+                                3'b000: state <= `STATE_R_MATRIX_00;
+                                3'b001: state <= `STATE_R_DIAGONAL_0;
+                                default:  /*do nothing*/;
+                            endcase
+                            maraddr  <= addr;
+                            marvalid <= 1;
+                            mrready  <= 1;
+                        end
+                        7'b1111111: begin  //sms
+                            case (funct3)
+                                3'b000: state <= `STATE_W_MATRIX_00;
+                                3'b001: state <= `STATE_W_DIAGONAL_0;
                                 default:  /*do nothing*/;
                             endcase
                             cache[0][0] <= wdata_M[31:0];
@@ -229,29 +239,29 @@ module Data_Cache (
                 end
                 `STATE_W_DIAGONAL_0: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[1][1];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[1][1];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_DIAGONAL_1;
+                        state <= `STATE_W_DIAGONAL_1;
                     end
                 end
                 `STATE_W_DIAGONAL_1: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[2][2];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[2][2];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_DIAGONAL_2;
+                        state <= `STATE_W_DIAGONAL_2;
                     end
                 end
                 `STATE_W_DIAGONAL_2: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[3][3];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[3][3];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_DIAGONAL_3;
+                        state <= `STATE_W_DIAGONAL_3;
                     end
                 end
                 `STATE_W_DIAGONAL_3: begin
@@ -413,107 +423,107 @@ module Data_Cache (
 
                 `STATE_W_MATRIX_00: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[0][1];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[0][1];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_01;
+                        state <= `STATE_W_MATRIX_01;
                     end
                 end
                 `STATE_W_MATRIX_01: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[0][2];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[0][2];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_02;
+                        state <= `STATE_W_MATRIX_02;
                     end
                 end
                 `STATE_W_MATRIX_02: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[0][3];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[0][3];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_03;
+                        state <= `STATE_W_MATRIX_03;
                     end
                 end
                 `STATE_W_MATRIX_03: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[1][0];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[1][0];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_10;
+                        state <= `STATE_W_MATRIX_10;
                     end
                 end
                 `STATE_W_MATRIX_10: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[1][1];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[1][1];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_11;
+                        state <= `STATE_W_MATRIX_11;
                     end
                 end
                 `STATE_W_MATRIX_11: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[1][2];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[1][2];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_12;
+                        state <= `STATE_W_MATRIX_12;
                     end
                 end
                 `STATE_W_MATRIX_12: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[1][3];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[1][3];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_13;
+                        state <= `STATE_W_MATRIX_13;
                     end
                 end
                 `STATE_W_MATRIX_13: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[2][0];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[2][0];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_20;
+                        state <= `STATE_W_MATRIX_20;
                     end
                 end
                 `STATE_W_MATRIX_20: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[2][1];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[2][1];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_21;
+                        state <= `STATE_W_MATRIX_21;
                     end
                 end
                 `STATE_W_MATRIX_21: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[2][2];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[2][2];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_22;
+                        state <= `STATE_W_MATRIX_22;
                     end
                 end
                 `STATE_W_MATRIX_22: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[2][3];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[2][3];
                     end
                     if (mbvalid) begin
-                        state = `STATE_W_MATRIX_23;
+                        state <= `STATE_W_MATRIX_23;
                     end
                 end
                 `STATE_W_MATRIX_23: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[3][0];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[3][0];
                     end
                     if (mbvalid) begin
                         state <= `STATE_W_MATRIX_30;
@@ -521,8 +531,8 @@ module Data_Cache (
                 end
                 `STATE_W_MATRIX_30: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[3][1];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[3][1];
                     end
                     if (mbvalid) begin
                         state <= `STATE_W_MATRIX_31;
@@ -530,8 +540,8 @@ module Data_Cache (
                 end
                 `STATE_W_MATRIX_31: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[3][2];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[3][2];
                     end
                     if (mbvalid) begin
                         state <= `STATE_W_MATRIX_32;
@@ -539,8 +549,8 @@ module Data_Cache (
                 end
                 `STATE_W_MATRIX_32: begin
                     if (mawready & mwready) begin
-                        mawaddr = mawaddr + 4;
-                        mwdata  = cache[3][3];
+                        mawaddr <= mawaddr + 4;
+                        mwdata  <= cache[3][3];
                     end
                     if (mbvalid) begin
                         state <= `STATE_W_MATRIX_33;

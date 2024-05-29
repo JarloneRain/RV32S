@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
+#include "dpic.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
     Sim *sim = new Sim();
     try
     {
-        int t = 4000;
+        int t = 100000;
         for (sim->Init(); !sim->Finish(); sim->Update())
         {
             t--;
@@ -168,93 +169,4 @@ int main(int argc, char **argv)
 
     delete sim;
     return exit_code;
-}
-
-extern "C" uint fR(uint8_t funct7, uint a, uint b)
-{
-    float fa = *(float *)&a, fb = *(float *)&b;
-    float fc = 0;
-    uint res = 0;
-    switch (funct7)
-    {
-        // fadd.s
-    case 0b0000000:
-        fc = fa + fb;
-        res = *(uint *)&fc;
-        break;
-        // fsub.s
-    case 0b0000100:
-        fc = fa - fb;
-        res = *(uint *)&fc;
-        break;
-        // fmul.s
-    case 0b0001000:
-        fc = fa * fb;
-        res = *(uint *)&fc;
-        break;
-        // fdiv.s
-    case 0b0001100:
-        fc = fa / fb;
-        res = *(uint *)&fc;
-        break;
-    // fsqrt.s
-    case 0b0101100:
-        fc = sqrt(fa);
-        res = *(uint *)&fc;
-        break;
-    // fsgnj.s
-    case 0b0010000:
-        res = (a & 0x7fffffff) | (b & 0x80000000);
-        break;
-    // fsgnjn.s
-    case 0b0010001:
-        res = (a & 0x7fffffff) | (~b & 0x80000000);
-        break;
-    // fsgnjx.s
-    case 0b0010010:
-        res = (a & 0x7fffffff) ^ (b & 0x80000000);
-        break;
-    // fmin.s
-    case 0b0010100:
-        fc = (fa < fb) ? fa : fb;
-        res = *(uint *)&fc;
-        break;
-    // fmax.s
-    case 0b0010101:
-        fc = (fa > fb) ? fa : fb;
-        res = *(uint *)&fc;
-        break;
-    // fcvt.w.s
-    case 0b1100000:
-        printf("fcvt.w.s not implemented\n");
-        break;
-    // fcvt.wu.s
-    case 0b1100001:
-        printf("fcvt.wu.s not implemented\n");
-        break;
-    // fcvt.s.w
-    case 0b1101000:
-        printf("fcvt.s.w not implemented\n");
-        break;
-    // fcvt.s.wu
-    case 0b1101001:
-        printf("fcvt.s.wu not implemented\n");
-        break;
-    // feq.s
-    case 0b1010000:
-        res = fa == fb;
-        break;
-    // flt.s
-    case 0b1010001:
-        res = fa < fb;
-        break;
-    // fle.s
-    case 0b1010010:
-        res = fa <= fb;
-        break;
-    default:
-        res = 0;
-        break;
-    }
-    return res;
 }

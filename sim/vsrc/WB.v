@@ -174,6 +174,13 @@ module GprMux (
                 F  = 0;
                 M  = ALU_OUT2_res_M;
             end
+            // smma
+            7'b1011111:begin
+                we = ME_valid;
+                R  = 0;
+                F  = 0;
+                M  = ALU_OUT2_res_M;
+            end
             default: begin
                 we = 0;
                 R  = 0;
@@ -274,9 +281,9 @@ module PC (
     input we,
     input [31:0] npc,
     output reg [31:0] pc,
-    input pc_opt
+    input pc_opt,
+    input [31:0] IF_snpc
 );
-    // assign valid = IF_ready;
     always @(posedge clk) begin
         if (rst) begin
             valid <= 1;
@@ -291,18 +298,10 @@ module PC (
                 if (we & ME_valid) begin
                     pc    <= npc;
                     valid <= 1;
-                end else if (IF_valid) begin
+                end else if (IF_valid && IF_snpc == pc) begin
                     valid <= !pc_opt;
                 end
             end
-
-
-            // if (pc_opt & ME_valid) begin
-            //     pc <= npc;
-            // end else if (AR_ready & valid) begin
-            //     pc    <= pc + 4;
-            //     valid <= 0;
-            // end 
         end
     end
 

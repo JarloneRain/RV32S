@@ -35,7 +35,7 @@ module CPU (
     //  ID_CTRL
     wire ID_CTRL_valid;
     wire ID_CTRL_ready;
-    wire ID_CTRL_conflict;// just for debug
+    wire ID_CTRL_conflict;  // just for debug
     //  IDU
     wire [6:0] IDU_opcode;
     wire [6:0] IDU_funct7;
@@ -64,6 +64,7 @@ module CPU (
     wire [2:0] Inst1_funct3;
     wire [2:0] Inst1_funct3Y;
     wire [1:0] Inst1_funct2R4;
+    wire [4:0] Inst1_rs2;
     wire [1:0] Inst1_rd_group;
     wire [4:0] Inst1_rd_index;
     wire [1:0] Inst1_rs1_group;
@@ -284,6 +285,7 @@ module CPU (
         ._funct3(IDU_funct3),
         ._funct3Y(IDU_funct3Y),
         ._funct2R4(IDU_funct2R4),
+        ._rs2(Inst1_rs2),
         ._rd_group(IDU_rd_group),
         ._rd_index(IDU_rd_index),
         // ._rs1_group(IDU_rs1_group),
@@ -298,6 +300,7 @@ module CPU (
         .funct3(Inst1_funct3),
         .funct3Y(Inst1_funct3Y),
         .funct2R4(Inst1_funct2R4),
+        .rs2(Inst1_rs2),
         .rd_group(Inst1_rd_group),
         .rd_index(Inst1_rd_index),
         // .rs1_group(Inst1_rs1_group),
@@ -389,6 +392,7 @@ module CPU (
         .funct3(Inst1_funct3),
         .funct3Y(Inst1_funct3Y),
         .funct2R4(Inst1_funct2R4),
+        .rs2(Inst1_rs2),
         .immU(Srcs_immU),
         .immJ(Srcs_immJ),
         .immB(Srcs_immB),
@@ -578,7 +582,8 @@ module CPU (
         .we(we_PC),
         .npc(ALU_OUT2_npc),
         .pc(PC_pc),
-        .pc_opt(pc_opt)
+        .pc_opt(pc_opt),
+        .IF_snpc(PC1_snpc)
     );
 
     AR _AR (
@@ -652,7 +657,8 @@ module CPU (
                      IDU_immU, IDU_immJ, IDU_immB, IDU_immS, IDU_immI, IDU_matI, IDU_matJ);
             $display("\t\tIDU pc_opt=%d", IDU_pc_opt);
         end
-        $display("\tID valid=%d  ready=%d conflict=%d", ID_CTRL_valid, ID_CTRL_ready,ID_CTRL_conflict);
+        $display("\tID valid=%d  ready=%d conflict=%d", ID_CTRL_valid, ID_CTRL_ready,
+                 ID_CTRL_conflict);
         if (ID_CTRL_valid) begin
             $display("\t\tInst1 opcode=%h  funct7=%h  funct3=%h  funct3Y=%h  funct2R4=%h",
                      Inst1_opcode, Inst1_funct7, Inst1_funct3, Inst1_funct3Y, Inst1_funct2R4);
@@ -660,8 +666,9 @@ module CPU (
                      Inst1_rd_group, Inst1_rd_index, Inst1_pc_opt);
             $display("\t\tSrcs immU=%h  immJ=%h  immB=%h  immS=%h  immI=%h  matI=%h  matJ=%h",
                      Srcs_immU, Srcs_immJ, Srcs_immB, Srcs_immS, Srcs_immI, Srcs_matI, Srcs_matJ);
-            $display("\t\t     scr1R=%h  scr2R=%h  scr3R=%h  scr1F=%h  scr2F=%h  scr3F=%h",
-                     Srcs_src1R, Srcs_src2R, Srcs_src3R, Srcs_src1F, Srcs_src2F, Srcs_src3F);
+            $display("\t\t     src1R=%h src1F=%h src1M=%h", Srcs_src1R, Srcs_src1F, Srcs_src1M);
+            $display("\t\t     src2R=%h src2F=%h src2M=%h", Srcs_src2R, Srcs_src2F, Srcs_src2M);
+            $display("\t\t     src3R=%h src3F=%h src3M=%h", Srcs_src3R, Srcs_src3F, Srcs_src3M);
             $display("\t\tPC2 snpc=%h", PC2_snpc);
             $display("\t\tALU npc=%h  res_R=%h  res_F=%h  res_M=%h", ALU_npc, ALU_res_R, ALU_res_F,
                      ALU_res_M);

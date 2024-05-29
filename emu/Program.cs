@@ -2,7 +2,7 @@
 
 var build = "/home/looooong/RV32S/tests/build";
 
-string target=args[0];
+string target = args[0];
 
 RV32Semu.Tracer tracer = new() { TracerOn = true };
 RV32Semu.Cpu cpu = new RV32Semu.CpuWithTracer(new RV32Semu.Decoder(), new RV32Semu.Gpr(),
@@ -29,13 +29,15 @@ try
                 case "x":
                     if (input.Length == 2
                         && int.TryParse(input[1], out int t))
-                        cpu.Exec(int.Parse(input[1]));
+                        cpu.Exec(t);
                     else goto default;
                     break;
                 case "t":
-                    if (input.Length == 2
-                        && uint.TryParse(input[1], out uint n))
-                        tracer.Print(n);
+                    if (input.Length == 2)
+                        if (uint.TryParse(input[1], out uint n))
+                            tracer.Print(n);
+                        else
+                            File.WriteAllText(input[1], tracer.TraceText);
                     else goto default;
                     break;
                 case "r":
