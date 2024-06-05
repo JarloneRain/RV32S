@@ -1,6 +1,5 @@
 `include "define.v"
 
-
 module Data_Cache (
     input clk,
     input rst,
@@ -568,7 +567,7 @@ module Data_Cache (
                 end
 
                 `STATE_FINISH: begin
-                    // 数据保留一个周期后直接扔掉,问就是约定
+                    // 数据保留一个周期后直接扔掉，这是约定
                     state         <= `STATE_FREE;
                     rdata_R_valid <= 0;
                     rdata_F_valid <= 0;

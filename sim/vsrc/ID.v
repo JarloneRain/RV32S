@@ -268,12 +268,6 @@ module Inst1 (
     // 寄存器字段
     input [1:0] _rd_group,
     input [4:0] _rd_index,
-    // input [1:0] _rs1_group,
-    // input [4:0] _rs1_index,
-    // input [1:0] _rs2_group,
-    // input [4:0] _rs2_index,
-    // input [1:0] _rs3_group,
-    // input [4:0] _rs3_index,
     // pc操作
     input _pc_opt,
     // 功能码
@@ -286,12 +280,6 @@ module Inst1 (
     // 寄存器相关字段
     output reg [1:0] rd_group,
     output reg [4:0] rd_index,
-    // output reg [1:0] rs1_group,
-    // output reg [4:0] rs1_index,
-    // output reg [1:0] rs2_group,
-    // output reg [4:0] rs2_index,
-    // output reg [1:0] rs3_group,
-    // output reg [4:0] rs3_index,
     // pc操作
     output reg pc_opt
 );
@@ -306,12 +294,6 @@ module Inst1 (
             //
             rd_group <= _rd_group;
             rd_index <= _rd_index;
-            // rs1_group <= _rs1_group;
-            // rs1_index <= _rs1_index;
-            // rs2_group <= _rs2_group;
-            // rs2_index <= _rs2_index;
-            // rs3_group <= _rs3_group;
-            // rs3_index <= _rs3_index;
             //
             pc_opt   <= _pc_opt;
         end

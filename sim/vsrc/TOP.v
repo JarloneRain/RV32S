@@ -67,11 +67,4 @@ module Top (
         .bvalid(AXI_bvalid),
         .bready(AXI_bready)
     );
-
-    always @(posedge clk) begin
-        // if (AXI_rdata == 32'h00100073) begin
-        //     $display("Ebreak detected!\nFinish soon.");
-        //     $finish;
-        // end
-    end
 endmodule

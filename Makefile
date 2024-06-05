@@ -30,7 +30,6 @@ emuc: $(EMU_BIN) $(TEST_FILE) $(EMU_SRC_FILES)
 	$(EMU_BIN) $(TESTS_BUILD_DIR)/$(TEST) -t -c
 
 emu: $(EMU_BIN) $(TEST_FILE) $(EMU_SRC_FILES)
-	echo $(EMU_SRC_FILES)
 	$(EMU_BIN) $(TESTS_BUILD_DIR)/$(TEST) -t
 
 # sim

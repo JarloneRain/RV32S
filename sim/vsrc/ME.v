@@ -12,11 +12,9 @@ module ME_CTRL (
 );
 
     assign ready = (WB_ready | !valid) & (Data_Cache_state == `STATE_FREE);
-    // 别忘记数据缓存的逻辑
     always @(posedge clk)
         if (rst) valid <= 0;
         else valid <= ready ? EX_valid : valid;
-    //& (Data_Cache_state==`STATE_FINISH || Data_Cache_state == `STATE_FREE)//
 endmodule
 
 
@@ -71,7 +69,6 @@ module ALU_OUT2 (
     input [31:0] _res_R,
     input [31:0] _res_F,
     input [511:0] _res_M,
-    //
     // ALU 的计算结果
     output reg [31:0] npc,
     output reg [31:0] res_R,

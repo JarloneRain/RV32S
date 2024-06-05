@@ -378,22 +378,7 @@ module ALU (
                 endcase
                 res_M = 0;
             end
-            //RV32S 偷个懒，只实现用到了的指令
-            // 7'b1010111:begin // move and trans
-            // npc = snpc;
-            // res_R=0;
-            //     case (funct3)
-            //         3'b000:begin
-            //             res_F=m1[matI][matJ];
-            //             res_M=0;
-            //         end 
-
-            //         default: begin
-            //             res_F=0;
-            //             res_M=0;
-            //         end
-            //     endcase
-            // end
+            //RV32S 只实现用到了的指令，但其它指令的实现方法类似
             7'b1111011: begin  // sml(d)
                 npc   = snpc;
                 res_R = src1R + immI;

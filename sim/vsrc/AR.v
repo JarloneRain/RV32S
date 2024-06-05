@@ -93,7 +93,5 @@ module AR (
                 end
             end
         end
-        // $display("rbusy:%d m_arready:%d\npcrready:%d arready:%d",  //
-        //          rbusy, m_arready, pcrready, arready);
     end
 endmodule

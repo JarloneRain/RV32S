@@ -1,6 +1,6 @@
 `include "define.v"
 
-// 写回阶段valid没有意义，但为了保持一致性懒得删
+// 写回阶段valid没有意义，但为了一致性予以保留
 module WB_CTRL (
     input clk,
     input rst,
@@ -175,7 +175,7 @@ module GprMux (
                 M  = ALU_OUT2_res_M;
             end
             // smma
-            7'b1011111:begin
+            7'b1011111: begin
                 we = ME_valid;
                 R  = 0;
                 F  = 0;

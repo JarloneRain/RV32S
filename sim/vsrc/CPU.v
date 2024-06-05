@@ -734,7 +734,6 @@ module CPU (
                  AXI_wdata, AXI_wvalid, AXI_wready, AXI_wstrb);
         $display("\t\tbresp =%h, bvalid =%b, bready =%b",  //
                  AXI_bresp, AXI_bvalid, AXI_bready);
-
     end
 
 endmodule

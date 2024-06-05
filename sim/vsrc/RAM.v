@@ -68,7 +68,6 @@ module RAM (
             _wvalid  <= 0;
             bvalid   <= 0;
         end else begin
-            //$display("rready=%d, rvalid=%d ", rready, rvalid);
             // 读取的逻辑
             if (arready & arvalid) begin  // 可以写入新的读取地址
                 _arvalid <= 1;
@@ -79,7 +78,6 @@ module RAM (
                 rvalid   <= 1;
                 _arvalid <= 0;
             end else if (rready & rvalid) begin  // 数据已被读走
-                //$display("rready=%d, rvalid=%d,82 ", rready, rvalid);
                 rvalid <= 0;
             end
             // 写入
@@ -90,15 +88,6 @@ module RAM (
                 _wdata   <= wdata;
                 _wstrb   <= wstrb;
             end else if (_awvalid & _wvalid) begin
-                // if (MEM_BASE <= _awaddr & _awaddr < MEM_BASE + MEM_SIZE) begin
-                //     memory[_awaddr+0] <= _wstrb[0] ? _wdata[7:0] : memory[_awaddr];
-                //     memory[_awaddr+1] <= _wstrb[1] ? _wdata[15:8] : memory[_awaddr+1];
-                //     memory[_awaddr+2] <= _wstrb[2] ? _wdata[23:16] : memory[_awaddr+2];
-                //     memory[_awaddr+3] <= _wstrb[3] ? _wdata[31:24] : memory[_awaddr+3];
-                //     bresp             <= AXI_RESP_OK;
-                // end else begin
-                //     bresp <= AXI_RESP_DECERR;
-                // end
                 if (!mem_write(_awaddr, _wdata, _wstrb[0], _wstrb[1], _wstrb[2], _wstrb[3])) begin
                     bresp <= `AXI_RESP_DECERR;
                     bad_finish();
